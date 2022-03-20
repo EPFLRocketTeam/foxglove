@@ -2,7 +2,7 @@ import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglo
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
-const commandTopic ="/commands";
+const instructionTopic ="/instructions";
 const updateTopic = "/updates";
 const testsTopic = "/tests";
 
@@ -77,8 +77,8 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     // Once you subscribe to topics, currentFrame will contain message events from those topics (assuming there are messages).
     context.subscribe([testsTopic]);
 
-    // Advertise command topic
-    context.advertise?.(commandTopic, "std_msgs/String", {
+    // Advertise instruction topic
+    context.advertise?.(instructionTopic, "std_msgs/String", {
       datatypes: new Map(
         Object.entries({
           "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
@@ -165,7 +165,7 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
    */
   function launchSimulation(){
     console.log("Launch simulation");
-    context.publish?.(commandTopic, { data: 'launch' });
+    context.publish?.(instructionTopic, { data: 'launch' });
   }
 
   /**
@@ -181,7 +181,12 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   }
 
   function testButton(){
-    context.publish?.(commandTopic, {data: 'test'});
+    context.publish?.(instructionTopic, {data: 'test'});
+  }
+  
+  function sendInstruction(){
+    console.log("Launch simulation");
+    context.publish?.(instructionTopic, { data: 'newInstruction' });
   }
 
   const test = list.length < 3 ? list.map(message => (message as { data: string}).data):<></>  
@@ -190,6 +195,7 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     <div style={{overflowY: 'scroll'}}>
       <h1>Test</h1>
       <div>{picker} <input type="range" min="0" max="15" step="1" defaultValue={picker} onChange={handleChange}/></div>
+      <div><button onClick={sendInstruction}>Send instruction</button></div>
       <div>Parameters</div>
       <div>{rocket}</div>
       <div>topics</div>
