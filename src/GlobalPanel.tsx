@@ -185,8 +185,12 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   }
   
   function sendInstruction(){
-    console.log("Launch simulation");
-    context.publish?.(instructionTopic, { data: 'newInstruction' });
+    console.log("List packages");
+    context.publish?.(instructionTopic, { data: 'launch_node' });
+  }
+  function sendInstruction2(){
+    console.log("List packages");
+    context.publish?.(instructionTopic, { data: 'stop_node' });
   }
 
   const test = list.length < 3 ? list.map(message => (message as { data: string}).data):<></>  
@@ -195,7 +199,7 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     <div style={{overflowY: 'scroll'}}>
       <h1>Test</h1>
       <div>{picker} <input type="range" min="0" max="15" step="1" defaultValue={picker} onChange={handleChange}/></div>
-      <div><button onClick={sendInstruction}>Send instruction</button></div>
+      <div><button onClick={sendInstruction}>Launch Node</button><button onClick={sendInstruction2}>Stop Node</button></div>
       <div>Parameters</div>
       <div>{rocket}</div>
       <div>topics</div>
