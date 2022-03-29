@@ -1,10 +1,15 @@
 import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+//Currently not working, waiting for update from foxglove
+//import { Button, Spinner } from 'reactstrap';
+//import 'bootstrap/dist/css/bootstrap.css';
 
 // Topics
 const instructionTopic ="/instructions";
+const updateTopic = "/updates";
 const dataTopic = "/data";
+const testsTopic = "/tests";
 
 // Pages
 const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_config": 3, "simulation": 4});
@@ -15,14 +20,19 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [_messages, setMessages] = useState<readonly MessageEvent<unknown>[] | undefined >();
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
+  const [picker, setPicker] = useState(5);
+  const [list, setList] = useState<unknown[]>([]);
   const [files, setFiles] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<Number>(pageEnum.home);
   
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
   
 
+
+
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
+
     // The render handler could be invoked as often as 60hz during playback if fields are changing often.
     context.onRender = (renderState: RenderState, done) => {
 
@@ -34,7 +44,6 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
 
       // Set parameters
       setParameters(renderState.parameters);
-      
 
       // currentFrame has messages on subscribed topics since the last render call
       setMessages(renderState.currentFrame);
@@ -42,6 +51,9 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       // Rederects all messages into the correct list
       renderState.currentFrame?.forEach(element => {
           switch (element.topic) {
+            case testsTopic:
+              setList(list => [...list, element.message]);
+              break;
             case dataTopic:
               let temp = element.message as {command:string,data: string[]};
               switch (temp.command) {
@@ -60,8 +72,6 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
         
     };
     topics;
-    parameters;
-
 
     // tell the panel context that we care about any update to the _topic_ field of RenderState
     context.watch("topics");
@@ -73,7 +83,7 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     context.watch("currentFrame");
 
     // subscribe to topics
-    context.subscribe([dataTopic]);
+    context.subscribe([testsTopic, dataTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -84,6 +94,20 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       ),
     });
 
+    // Advertise update topic
+    context.advertise?.(updateTopic, "real_time_simulator/Update", {
+      datatypes: new Map(
+        Object.entries({
+          "real_time_simulator/Update": {definitions: [
+            { type: "string", name: "config"},
+            { type: "string", name: "parameter"},
+            { type: "string", name: "value"},
+        ]}
+        }),
+      ),
+    });
+
+    // Advertise data topic
     context.advertise?.(dataTopic, "real_time_simulator/Data", {
       datatype: new Map(
         Object.entries({
@@ -102,6 +126,45 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     renderDone?.();
   }, [renderDone]);
 
+  list
+
+  // Creates a list for all parameter files
+  const rocket = [];
+  rocket.push(<div><h2>Rocket</h2></div>)
+  const environment = [];
+  const perturbation = [];
+  const visualization = [];
+  const others = [];
+
+  parameters?.forEach((value, key) => {
+    const temp = key.split("/");
+    switch (temp[1]) {
+      case "rocket":
+        rocket.push(<div>{temp[2]} : {value}</div>)
+        break;
+      case "environment":
+        environment.push(<div><h5>{temp[2]}</h5> : {value}</div>)
+        break;
+      case "perturbation":
+        perturbation.push(<div><h5>{temp[2]}</h5> : {value}</div>)
+        break;
+      case "visualization":
+        visualization.push(<div><h5>{temp[2]}</h5> : {value}</div>)
+        break;
+      default:
+        others.push(<div><h5>{temp[1]}</h5> : {value}</div>)
+        break;
+    }
+
+  });
+
+  /**
+   * Handles picker
+   * @param event event that triggered the function call
+   */
+  function handleChange(event:any) {
+    setPicker(event.target.value);
+  }
 
   /**
    * Launches the simulation
@@ -110,6 +173,19 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     console.log("Launch simulation");
     context.publish?.(instructionTopic, { data: 'launch' });
   }
+
+  /**
+   * Send a message to modify a parameter
+   */
+  function updateValue(){
+    console.log("Update value");
+    context.publish?.(updateTopic, {
+      config: 'rocket',
+      parameter: 'Thrust',
+      value: '10'
+    });
+  }
+  updateValue
 
   /**
    * This method is used to generate the buttons to select the config
@@ -162,6 +238,14 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     });
     setCurrentPage(pageEnum.simulation);
   }
+
+  /**
+   * Publishes a test message on the instruction topic (mainly for tests). Will be removed on final version
+   */
+  function testButton(){
+    context.publish?.(instructionTopic, {data: 'test'});
+  }
+  testButton
   
   /**
    * Publishes a message on the instruction topic to launch the nodes
@@ -201,6 +285,15 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       </>
     );
   } 
+  
+  // Temporary test layout
+  const myelem = (
+    <div style={{overflowY: 'scroll'}}>
+      <h1>Test</h1>
+      <div>{picker} <input type="range" min="0" max="15" step="1" defaultValue={picker} onChange={handleChange}/></div>
+    </div>
+  );
+  myelem
 
   /**
    * Select the page to render acording to the currentPage value
