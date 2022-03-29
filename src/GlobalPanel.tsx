@@ -2,44 +2,39 @@ import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglo
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
+// Topics
 const instructionTopic ="/instructions";
-const updateTopic = "/updates";
-const testsTopic = "/tests";
+const dataTopic = "/data";
+
+// Pages
+const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_config": 3, "simulation": 4});
+
 
 
 function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [_messages, setMessages] = useState<readonly MessageEvent<unknown>[] | undefined >();
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
-  const [picker, setPicker] = useState(5);
-  const [list, setList] = useState<unknown[]>([]);
+  const [files, setFiles] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState<Number>(pageEnum.home);
   
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
   
 
-
-
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
-    // The render handler is run by the broader studio system during playback when your panel
-    // needs to render because the fields it is watching have changed. How you handle rendering depends on your framework.
-    // You can only setup one render handler - usually early on in setting up your panel.
-    //
-    // Without a render handler your panel will never receive updates.
-    //
     // The render handler could be invoked as often as 60hz during playback if fields are changing often.
     context.onRender = (renderState: RenderState, done) => {
-      // render functions receive a _done_ callback. You MUST call this callback to indicate your panel has finished rendering.
-      // Your panel will not receive another render callback until _done_ is called from a prior render. If your panel is not done
-      // rendering before the next render call, studio shows a notification to the user that your panel is delayed.
-      //
+
       // Set the done callback into a state variable to trigger a re-render.
       setRenderDone(done);
-      // We may have new topics - since we are also watching for messages in the current frame, topics may not have changed
-      // It is up to you to determine the correct action when state has not changed.
+      
+      // Set topics
       setTopics(renderState.topics);
 
+      // Set parameters
       setParameters(renderState.parameters);
+      
 
       // currentFrame has messages on subscribed topics since the last render call
       setMessages(renderState.currentFrame);
@@ -47,10 +42,16 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       // Rederects all messages into the correct list
       renderState.currentFrame?.forEach(element => {
           switch (element.topic) {
-            case testsTopic:
-              setList(list => [...list, element.message]);
+            case dataTopic:
+              let temp = element.message as {command:string,data: string[]};
+              switch (temp.command) {
+                case "configs":
+                  setFiles([...temp.data]);
+                  break;
+                default:
+                  break;
+              }
               break;
-          
             default:
               
               break;
@@ -59,10 +60,8 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
         
     };
     topics;
-    
+    parameters;
 
-    // After adding a render handler, you must indicate which fields from RenderState will trigger updates.
-    // If you do not watch any fields then your panel will never render since the panel context will assume you do not want any updates.
 
     // tell the panel context that we care about any update to the _topic_ field of RenderState
     context.watch("topics");
@@ -73,9 +72,8 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     // This corresponds to the _currentFrame_ field of render state.
     context.watch("currentFrame");
 
-    // subscribe to some topics, you could do this within other effects, based on input fields, etc
-    // Once you subscribe to topics, currentFrame will contain message events from those topics (assuming there are messages).
-    context.subscribe([testsTopic]);
+    // subscribe to topics
+    context.subscribe([dataTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -86,15 +84,13 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       ),
     });
 
-    // Advertise update topic
-    context.advertise?.(updateTopic, "real_time_simulator/Update", {
-      datatypes: new Map(
+    context.advertise?.(dataTopic, "real_time_simulator/Data", {
+      datatype: new Map(
         Object.entries({
-          "real_time_simulator/Update": {definitions: [
-            { type: "string", name: "config"},
-            { type: "string", name: "parameter"},
-            { type: "string", name: "value"},
-        ]}
+          "real_time_simulator/Data": {definitions: [
+            {type: "string", name: "command"},
+            {type: "string[]", name: "data"},
+          ]}
         }),
       ),
     });
@@ -107,59 +103,6 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   }, [renderDone]);
 
 
-  /*
-  //Generate 10 buttons
-  const items = [];
-  for (let index = 0; index < 10; index++) {
-    items.push(<div><button onClick={handleClic} id={"id" + index}>Button {index}</button></div>);
-    
-  }
-
-
-  function handleClic(event: any){
-      var clicked = event.target.id+".txt";
-      clicked;
-  }
-  */
-
-  // Creates a list for all parameter files
-  const rocket = [];
-  rocket.push(<div><h2>Rocket</h2></div>)
-  const environment = [];
-  const perturbation = [];
-  const visualization = [];
-  const others = [];
-
-  parameters?.forEach((value, key) => {
-    const temp = key.split("/");
-    switch (temp[1]) {
-      case "rocket":
-        rocket.push(<div>{temp[2]} : {value}</div>)
-        break;
-      case "environment":
-        environment.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      case "perturbation":
-        perturbation.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      case "visualization":
-        visualization.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      default:
-        others.push(<div><h5>{temp[1]}</h5> : {value}</div>)
-        break;
-    }
-
-  });
-
-  /**
-   * Handles picker
-   * @param event 
-   */
-  function handleChange(event:any) {
-    setPicker(event.target.value);
-  }
-
   /**
    * Launches the simulation
    */
@@ -169,52 +112,125 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   }
 
   /**
-   * Send a message to modify a parameter
+   * This method is used to generate the buttons to select the config
+   * @param param0 name of the config
+   * @returns Return the component for the button with its onclick set
    */
-  function updateValue(){
-    console.log("Update value");
-    context.publish?.(updateTopic, {
-      config: 'rocket',
-      parameter: 'Thrust',
-      value: '10'
-    });
+  function ButtonFile({name}: {name:string}){
+    return (
+      <div style={{marginTop:'10px'}}>
+        <button onClick={() => selectConfig(name)}>{name}</button>
+      </div>
+    );
   }
 
-  function testButton(){
-    context.publish?.(instructionTopic, {data: 'test'});
+  /**
+   * Generate the config panel layout
+   * @returns Return the layout of the panel that lists all config files
+   */
+  function ListConfigs(){
+    return (
+      <>
+        <h1 style={{textAlign:'center'}}>Configs</h1>
+        <div>{files.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
+      </>
+    );
+  }
+
+  /**
+   * Generate the simulation panel layout
+   * @returns Returns the layout of the panel to handle the simulation
+   */
+  function LaunchPanel(){
+    return (
+      <>
+        <h1 style={{textAlign:'center'}}>Launch Panel</h1>
+        <div><button onClick={startNodes}>Launch nodes</button><button onClick={stopNodes}>Stop nodes</button></div>
+        <div><button onClick={launchSimulation}>Launch simulation</button></div>
+      </>
+    );
+  }
+
+  /**
+   * Sends a message on the data topic to give the selected config file and changes the current page to the simulation page
+   * @param name Name of the selected config
+   */
+  function selectConfig(name:string){
+    context.publish?.(dataTopic, {
+      command: 'select_config',
+      data:[name]
+    });
+    setCurrentPage(pageEnum.simulation);
   }
   
-  function sendInstruction(){
-    console.log("List packages");
+  /**
+   * Publishes a message on the instruction topic to launch the nodes
+   */
+  function startNodes(){
+    console.log("Start nodes");
     context.publish?.(instructionTopic, { data: 'launch_node' });
   }
-  function sendInstruction2(){
-    console.log("List packages");
+
+  /**
+   * Publishes a message on the instruction topic to stop nodes
+   */
+  function stopNodes(){
+    console.log("Stop nodes");
     context.publish?.(instructionTopic, { data: 'stop_node' });
   }
 
-  const test = list.length < 3 ? list.map(message => (message as { data: string}).data):<></>  
+  /**
+   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
+   */
+  function getConfigs(){
+    context.publish?.(instructionTopic, {data: 'get_configs'});
+    setCurrentPage(pageEnum.choose_configs);    
+  }
 
-  const myelem = (
-    <div style={{overflowY: 'scroll'}}>
-      <h1>Test</h1>
-      <div>{picker} <input type="range" min="0" max="15" step="1" defaultValue={picker} onChange={handleChange}/></div>
-      <div><button onClick={sendInstruction}>Launch Node</button><button onClick={sendInstruction2}>Stop Node</button></div>
-      <div>Parameters</div>
-      <div>{rocket}</div>
-      <div>topics</div>
-      <div>{topics?.map((n)=> n.name).join(" ,")}</div>
-      <div>messages</div>
-      <div>{_messages?.map(messageEvent => (messageEvent.message as { data: string}).data)}</div>
-      <div>{_messages?.map(messageEvent => messageEvent.topic)}</div>
-      <div>Registered messages</div>
-      <div>{test} = {list.length} - {_messages?.length}</div>
-      <div><div><button onClick={launchSimulation}>Launch simulation</button><button onClick={updateValue}>Update</button><button onClick={testButton}>Test</button></div></div>
+  /**
+   * Generates the Home panel layout
+   * @returns Returns the layout of the home panel
+   */
+  function Home(){
+    return (
+      <>
+        <h1 style={{textAlign:'center'}}>Home</h1>
+        <div>
+          <button onClick={getConfigs}>Load configs</button>
+        </div>
+      </>
+    );
+  } 
+
+  /**
+   * Select the page to render acording to the currentPage value
+   * @returns Returns the current page to render
+   */
+  function panelSelector(){
+    switch(currentPage){
+      case pageEnum.home:
+        return <Home/>
+      case pageEnum.choose_configs:
+        return <ListConfigs/>
+      case pageEnum.simulation:
+        return <LaunchPanel/>
+      default:
+        return <h1>404 page not found</h1>
+    }
+  }
+  
+  // Main layout
+  const layout = (
+    <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+      <div>
+      {panelSelector()}
+      </div>
     </div>
   );
-
-  return myelem;
+  return layout;
 }
+
+
 
 export function initGlobalPanel(context: PanelExtensionContext) {
   ReactDOM.render(<GlobalPanel context={context} />, context.panelElement);
