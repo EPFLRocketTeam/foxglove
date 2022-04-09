@@ -1,2 +1,2 @@
 import { PanelExtensionContext } from "@foxglove/studio";
-export declare function initGlobalPanel(context: PanelExtensionContext): void;
+export declare function initParameterPanel(context: PanelExtensionContext): void;
