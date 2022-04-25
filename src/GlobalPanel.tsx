@@ -9,6 +9,7 @@ import ReactDOM from "react-dom";
 const instructionTopic ="/instructions";
 const updateTopic = "/updates";
 const dataTopic = "/data";
+//const dataTopic2 = "/data2";
 const testsTopic = "/tests";
 
 // Pages
@@ -22,16 +23,17 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
 
   const [list, setList] = useState<unknown[]>([]);
-  const [files, setFiles] = useState<string[]>([]);
-  const [fileParameters, setFileParameters] = useState<Map<String, string[]>>(new Map())
+  list;
+
+  const [recentConfigs, setRecentConfigs] = useState<string[]>([]);
+  const [configs, setConfigs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<Number>(pageEnum.home);
   const [expanded, setExpanded] = useState<string>("");
   
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
   const [parameterFiles, setParameterFiles] = useState<string[]>(["rocket", "environment","perturbation","visualization"])
   
-
-  setParameterFiles
+  
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
@@ -51,26 +53,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       // currentFrame has messages on subscribed topics since the last render call
       setMessages(renderState.currentFrame);
 
-      renderState.parameters?.forEach((key, value) => {
-        let temp = key.split("/");
-        value
-        //if(temp[1] in parameterFiles)
-        switch(temp[1]){
-          case "rocket":
-          case "environment":
-          case "perturbation":
-          case "visualization":
-            if(fileParameters.has(temp[1])){
-              let l = [...(fileParameters.get(temp[1]) as string[]), key];
-              setFileParameters(fileParameters.set(temp[1], l))
-            }
-            break;
-
-          default:
-            break;
-        }
-      });
-
       // Rederects all messages into the correct list
       renderState.currentFrame?.forEach(element => {
           switch (element.topic) {
@@ -80,8 +62,11 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
             case dataTopic:
               let temp = element.message as {command:string,data: string[]};
               switch (temp.command) {
+                case "recent_configs":
+                  setRecentConfigs([...temp.data]);
+                  break;
                 case "configs":
-                  setFiles([...temp.data]);
+                  setConfigs([...temp.data]);
                   break;
                 default:
                   break;
@@ -94,7 +79,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
         });
         
     };
-    topics;
 
     // tell the panel context that we care about any update to the _topic_ field of RenderState
     context.watch("topics");
@@ -106,13 +90,25 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     context.watch("currentFrame");
 
     // subscribe to topics
-    context.subscribe([testsTopic, dataTopic]);
+    context.subscribe([testsTopic,updateTopic, dataTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
       datatypes: new Map(
         Object.entries({
           "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
+        }),
+      ),
+    });
+
+    // Advertise data topic
+    context.advertise?.(dataTopic, "real_time_simulator/Data", {
+      datatypes: new Map(
+        Object.entries({
+          "real_time_simulator/Data": {definitions: [
+            { type: "string", name: "command"},
+            { type: "string", isArray:true, name: "data"},
+          ]}
         }),
       ),
     });
@@ -125,22 +121,12 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
             { type: "string", name: "config"},
             { type: "string", name: "parameter"},
             { type: "string", name: "value"},
-        ]}
-        }),
-      ),
-    });
-
-    // Advertise data topic
-    context.advertise?.(dataTopic, "real_time_simulator/Data", {
-      datatype: new Map(
-        Object.entries({
-          "real_time_simulator/Data": {definitions: [
-            {type: "string", name: "command"},
-            {type: "string[]", name: "data"},
           ]}
         }),
       ),
     });
+
+    
 
   }, []);
 
@@ -149,9 +135,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     renderDone?.();
   }, [renderDone]);
 
-  list
-  expanded
-  setExpanded
+  topics;
+  setParameterFiles;
 
   // Creates a list for all parameter files
   const rocket = [];
@@ -183,10 +168,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
 
   });
 
-  
-
-  
-
   /**
    * Send a message to modify a parameter
    */
@@ -198,15 +179,33 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       value: '10'
     });
   }
-  updateValue
 
+  function onChange(event:any){
+    let v = String(event.target.value)
+    if(v.includes(',')){
+      v = '[' + v + ']'
+    }
+    context.publish?.(updateTopic, {
+      config: expanded,
+      parameter: String(event.target.previousElementSibling.value),
+      value: v
+    });
+  }
 
-
-  function FileParameters({name}: {name:String}){
-    name;
+  function FileParameters({name}: {name:string}){
+    updateValue;
+    let params: [string,string][] = []
+    if(typeof parameters !== "undefined"){
+      Array.from(parameters.entries()).forEach(elem => {
+        let k = elem[0].split('/');
+        if(k[1] == name){
+          params = [...params, [k[2] as string, elem[1]]];
+        }
+      })
+    }
     return (
       <div><br/>
-      {fileParameters.get(name)?.map(item => <p>{item}</p>)}
+      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
       </div>
     );
   }
@@ -215,13 +214,12 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   function FileBar({name, expand} : {name:string, expand:Boolean}){
     var params = <></>
     if(expand){
-      params = <FileParameters name={name}/>
+      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
     }
-    params
     return (
       <div>
-        <p onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
-        {params}
+        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+          {params}
       </div>
       
     );
@@ -233,13 +231,29 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   };
 
   function ParameterFilesList({ list }: {list:string[]}){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+
     return (
-      <div>
-        {list.map(item => 
-          <FileBar name={item} expand={expanded == item}/>
-        )}
-        <div>Parameters : </div><br/>
-        {parameters}
+      <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
+        <div>
+          <img onClick={() => setCurrentPage(pageEnum.choose_configs)} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <h1 style={{textAlign:'center'}}>Nom de config</h1>
+        </div>
+        <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
+         {list.map(item => 
+            <FileBar name={item} expand={expanded == item}/>
+          )}
+         </div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle}>Save</button><button style={buttonStyle}>Export</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
       </div>
     );
   }
@@ -251,23 +265,44 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    * @returns Return the component for the button with its onclick set
    */
   function ButtonFile({name}: {name:string}){
+    let buttonStyle = {
+      backgroundColor:'transparent',
+      border:'none',
+      color:'#1BA8FF',
+      fontSize:'14px',
+      marginBottom:'10px'
+    };
+    buttonStyle
     return (
-      <div style={{marginTop:'10px'}}>
-        <button onClick={() => selectConfig(name)}>{name}</button>
-      </div>
+        <button style={buttonStyle} onClick={() => selectConfig(name)}>{name}</button>
     );
   }
+
 
   /**
    * Generate the config panel layout
    * @returns Return the layout of the panel that lists all config files
    */
   function ListConfigs(){
+    
     return (
-      <>
-        <h1 style={{textAlign:'center'}}>Configs</h1>
-        <div>{files.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
-      </>
+      <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+        <div style={{width:'100%'}}>
+          <img onClick={() => setCurrentPage(pageEnum.home)} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
+              <h1 style={{textAlign:'center'}}>Choose your configuration</h1>
+        </div>
+        <div>
+          <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column'}}>
+            <h2 style={{textAlign:'left'}}>Recent</h2>
+            <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column', justifyContent:'left', alignItems:'flex-start'}}>{recentConfigs.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
+          </div>
+          <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column'}}>
+            <h2 style={{textAlign:'left'}}>Configurations</h2>
+            <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column', justifyContent:'left', alignItems:'flex-start'}}>{configs.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
+          </div>
+        </div>
+      </div>
+      
     );
   }
 
@@ -293,17 +328,50 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   }
 
   /**
+   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
+   */
+   function launchConfig(){
+    context.publish?.(instructionTopic, {data: 'launch_config'});
+    setCurrentPage(pageEnum.launched);    
+  }
+
+  /**
+   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
+   */
+   function stopConfig(){
+    context.publish?.(instructionTopic, {data: 'stop_config'});
+    setCurrentPage(pageEnum.home);    
+  }
+
+  /**
    * Generates the Home panel layout
    * @returns Returns the layout of the home panel
    */
   function Home(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'16px', 
+      padding:'16px 40px', 
+      marginBottom:'16px',
+      border:'none'
+    };
     return (
-      <>
-        <h1 style={{textAlign:'center'}}>Home</h1>
+      <div style={{height:'100%', display:'flex', justifyContent:'center', alignItems:'center', marginTop:'-100px'}}>
         <div>
-          <button onClick={getConfigs}>Load configs</button>
+          <h1 style={{textAlign:'left'}}>Simulator</h1>
+          <div style={{display:'flex', flexDirection:'column'}}>
+            <button style={buttonStyle}
+            onClick={getConfigs}>Load configs</button>
+            <button style={buttonStyle}
+            onClick={getConfigs}>Load configs</button>
+            <button style={buttonStyle}
+            onClick={getConfigs}>Load configs</button>
+          </div>
         </div>
-      </>
+      </div>
     );
   } 
 
@@ -314,12 +382,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    function Test(){
     return (
       <div style={{height:'100%'}}>
-        <div style={{width:'50%', height:'100%', float:'left', backgroundColor:'red', justifyContent:'center', textAlign:'center', borderRight:'2px solid black'}}>
-          <h1>Text</h1>
-        </div>
-        <div style={{width:'50%', float:'left', backgroundColor:'blue', justifyContent:'center', textAlign:'center'}}>
-          <h1>Test</h1>
-        </div>
+        <input type='text' defaultValue='test'/>
       </div>
     );
   } 
@@ -339,7 +402,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       case pageEnum.edit_param:
         return <ParameterPage/>;
       case pageEnum.launched:
-        return <div><h1>Parameters have been launched</h1></div>
+        return <div><h1>Parameters have been launched</h1><button onClick={stopConfig}>Stop</button></div>
       default:
         return <h1>404 page not found</h1>;
     }
@@ -347,7 +410,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   
   // Main layout
   const layout = (
-    <div>
+    <div style={{height:'100%'}}>
       {panelSelector()}
     </div>
   );
