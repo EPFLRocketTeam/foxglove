@@ -1,4 +1,4 @@
-import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglove/studio";
+import { PanelExtensionContext, RenderState, Topic} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 //Currently not working, waiting for update from foxglove
@@ -9,17 +9,16 @@ import ReactDOM from "react-dom";
 const instructionTopic ="/instructions";
 const updateTopic = "/updates";
 const dataTopic = "/data";
-//const dataTopic2 = "/data2";
+const stateTopic = "/simulation_state";
 const testsTopic = "/tests";
 
 // Pages
-const pageEnum = Object.freeze({"test": 0,"home": 1, "choose_configs": 2, "edit_param": 3, "launched": 4});
+const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_param": 3, "launched": 4});
 
 
 
 function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [_messages, setMessages] = useState<readonly MessageEvent<unknown>[] | undefined >();
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
 
   const [list, setList] = useState<unknown[]>([]);
@@ -31,9 +30,11 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   const [expanded, setExpanded] = useState<string>("");
   
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
-  const [parameterFiles, setParameterFiles] = useState<string[]>(["rocket", "environment","perturbation","visualization"])
+  const [parameterFiles, setParameterFiles] = useState<string[]>([]);
   
+  const [configName, setConfigName] = useState<string>("None");
   
+  const [currentState, setCurrentState] = useState<string>("1");
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
@@ -50,9 +51,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       // Set parameters
       setParameters(renderState.parameters);
 
-      // currentFrame has messages on subscribed topics since the last render call
-      setMessages(renderState.currentFrame);
-
       // Rederects all messages into the correct list
       renderState.currentFrame?.forEach(element => {
           switch (element.topic) {
@@ -68,10 +66,38 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
                 case "configs":
                   setConfigs([...temp.data]);
                   break;
+                  case "list_parameter_prefix":
+                    setParameterFiles([...temp.data])
+                    break;
                 default:
                   break;
               }
               break;
+              
+            case stateTopic:
+              let tmp = element.message as {command:string,data: string[]};
+              if(currentState != tmp.command ){
+                setCurrentState(tmp.command)
+                switch(Number(tmp.command)){
+                  case 1:
+                    setCurrentPage(pageEnum.home)
+                    setConfigName("None")
+                    break;
+                  case 2:
+                    setCurrentPage(pageEnum.edit_param)
+                    setConfigName((tmp.data)[0] as string)
+                    break;
+                  case 3:
+                  case 4:
+                  case 5:
+                    setCurrentPage(pageEnum.launched)
+                    setConfigName((tmp.data)[0] as string)
+                    break;
+                  default:
+                    break;
+                  }
+                }
+                break;
             default:
               
               break;
@@ -90,7 +116,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     context.watch("currentFrame");
 
     // subscribe to topics
-    context.subscribe([testsTopic,updateTopic, dataTopic]);
+    context.subscribe([testsTopic,updateTopic, dataTopic, stateTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -136,37 +162,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   }, [renderDone]);
 
   topics;
-  setParameterFiles;
-
-  // Creates a list for all parameter files
-  const rocket = [];
-  rocket.push(<div><h2>Rocket</h2></div>)
-  const environment = [];
-  const perturbation = [];
-  const visualization = [];
-  const others = [];
-
-  parameters?.forEach((value, key) => {
-    const temp = key.split("/");
-    switch (temp[1]) {
-      case "rocket":
-        rocket.push(<div>{temp[2]} : {value}</div>)
-        break;
-      case "environment":
-        environment.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      case "perturbation":
-        perturbation.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      case "visualization":
-        visualization.push(<div><h5>{temp[2]}</h5> : {value}</div>)
-        break;
-      default:
-        others.push(<div><h5>{temp[1]}</h5> : {value}</div>)
-        break;
-    }
-
-  });
 
   /**
    * Send a message to modify a parameter
@@ -224,7 +219,11 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       
     );
   }
-  FileBar
+
+  function backToListConfig(){
+    context.publish?.(instructionTopic, {data: 'clear_parameters'});
+    setCurrentPage(pageEnum.choose_configs);    
+  }
 
   function ParameterPage(){
     return <ParameterFilesList list={parameterFiles} />
@@ -245,15 +244,15 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
         <div>
-          <img onClick={() => setCurrentPage(pageEnum.choose_configs)} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
-          <h1 style={{textAlign:'center'}}>Nom de config</h1>
+          <img onClick={backToListConfig} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <h1 style={{textAlign:'center'}}>{configName}</h1>
         </div>
         <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
          {list.map(item => 
             <FileBar name={item} expand={expanded == item}/>
           )}
          </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle}>Save</button><button style={buttonStyle}>Export</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle}>Save</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
       </div>
     );
   }
@@ -315,6 +314,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       command: 'select_config',
       data:[name]
     });
+    setConfigName(name);
     setCurrentPage(pageEnum.edit_param);
   }
 
@@ -339,7 +339,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
    */
    function stopConfig(){
-    context.publish?.(instructionTopic, {data: 'stop_config'});
+    context.publish?.(instructionTopic, {data: 'close_config'});
     setCurrentPage(pageEnum.home);    
   }
 
@@ -379,10 +379,21 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    * Generates the Home panel layout
    * @returns Returns the layout of the home panel
    */
-   function Test(){
+   function LaunchedPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'16px', 
+      padding:'16px 40px', 
+      marginBottom:'16px',
+      border:'none'
+    };
     return (
-      <div style={{height:'100%'}}>
-        <input type='text' defaultValue='test'/>
+      <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
+        <h1 style={{textAlign:'center'}}>Parameters have been launched</h1>
+        <button style={buttonStyle} onClick={stopConfig}>Close {configName}</button>
       </div>
     );
   } 
@@ -393,8 +404,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    */
   function panelSelector(){
     switch(currentPage){
-      case pageEnum.test:
-        return <Test/>;
       case pageEnum.home:
         return <Home/>;
       case pageEnum.choose_configs:
@@ -402,7 +411,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       case pageEnum.edit_param:
         return <ParameterPage/>;
       case pageEnum.launched:
-        return <div><h1>Parameters have been launched</h1><button onClick={stopConfig}>Stop</button></div>
+        return <LaunchedPanel/>
       default:
         return <h1>404 page not found</h1>;
     }

@@ -1,22 +1,28 @@
-import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglove/studio";
+import { PanelExtensionContext, RenderState} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
+
 const instructionTopic = "/instructions";
 const updateTopic = "/updates";
+const stateTopic = "/simulation_state";
 updateTopic
 const dataTopic = "/data";
 
-const stateEnum = Object.freeze({"test": 0,"stopped": 1, "started": 2, "simulation": 3});
+const stateEnum = Object.freeze({"not_started":-1, "test": 0,"stopped": 1, "started": 2, "simulation": 3});
 
 function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
-  const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [messages, setMessages] = useState<readonly MessageEvent<unknown>[] | undefined>();
+  //const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [currentState, setCurrentState] = useState<Number>(stateEnum.stopped);
 
-  const [picker, setPicker] = useState(10);
+  const [windSpeed, setWindSpeed] = useState<number>(-1);
+  const [windDirection, setWindDirection] = useState<number>(-1);
 
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
+
+  const [currentStateSimu, setCurrentStateSimu] = useState<string>("1");
+  const [configName, setConfigName] = useState<string>("None");
+  configName
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
@@ -25,86 +31,159 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
 
       setRenderDone(done);
 
-      setTopics(renderState.topics);
+      //setTopics(renderState.topics);
 
-      setMessages(renderState.currentFrame);
+      renderState.currentFrame?.forEach(element => {
+        switch (element.topic) {
+          case stateTopic:
+            let tmp = element.message as {command:string,data: string[]};
+            if(currentStateSimu != tmp.command ){
+              setCurrentStateSimu(tmp.command)
+              switch(Number(tmp.command)){
+                case 1:
+                  setCurrentState(stateEnum.not_started)
+                  setConfigName("None")
+                  break;
+                case 2:
+                  setCurrentState(stateEnum.not_started)
+                  setConfigName("None")
+                  break;
+                case 3:
+                  setCurrentState(stateEnum.stopped)
+                  setConfigName((tmp.data)[0] as string)
+                  break;
+                case 4:
+                  setCurrentState(stateEnum.started)
+                  setConfigName((tmp.data)[0] as string)
+                  setWindSpeed(Number((tmp.data)[1] as string))
+                  setWindDirection(Number((tmp.data)[2] as string))
+                  break;
+                case 5:
+                  setCurrentState(stateEnum.simulation)
+                  setConfigName((tmp.data)[0] as string)
+                  setWindSpeed(Number((tmp.data)[1] as string))
+                  setWindDirection(Number((tmp.data)[2] as string))
+                  break;
+                default:
+                  break;
+                }
+              }
+              break;
+          default:
+            
+            break;
+        }
+      });
     };
 
-    context.watch("topics");
+    //context.watch("topics");
 
     context.watch("currentFrame");
 
-    context.subscribe([dataTopic]);
-
-    // Advertise instruction topic
-    context.advertise?.(instructionTopic, "std_msgs/String", {
-      datatypes: new Map(
-        Object.entries({
-          "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
-        }),
-      ),
-    });
-
-    // Advertise data topic
-    context.advertise?.(dataTopic, "real_time_simulator/Data", {
-      datatypes: new Map(
-        Object.entries({
-          "real_time_simulator/Data": {definitions: [
-            { type: "string", name: "command"},
-            { type: "string", isArray:true, name: "data"},
-          ]}
-        }),
-      ),
-    });
+    context.subscribe([dataTopic, stateTopic]);
 
   }, []);
+
+  // Advertise instruction topic
+  context.advertise?.(instructionTopic, "std_msgs/String", {
+    datatypes: new Map(
+      Object.entries({
+        "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
+      }),
+    ),
+  });
+
+  // Advertise data topic
+  context.advertise?.(dataTopic, "real_time_simulator/Data", {
+    datatypes: new Map(
+      Object.entries({
+        "real_time_simulator/Data": {definitions: [
+          { type: "string", name: "command"},
+          { type: "string", isArray:true, name: "data"},
+        ]}
+      }),
+    ),
+  });
 
   // invoke the done callback once the render is complete
   useEffect(() => {
     renderDone?.();
   }, [renderDone]);
   
-  messages;
-  topics;
+  //messages;
+  //topics;
 
   /**
    * Handles picker
    * @param event event that triggered the function call
    */
-   function handleChange(event:any) {
+   function windSpeedChange(event:any) {
     let v = event.target.value
-    setPicker(v);
+    setWindSpeed(v);
     context.publish?.(dataTopic, {
-      command: 'change_wind_speed',
-      data:[String(v)]
+      command: 'change_wind',
+      data:[String(v), String(windDirection)]
     });
   }
 
-    /**
-   * Publishes a message on the instruction topic to launch the nodes
+  /**
+   * Handles picker
+   * @param event event that triggered the function call
    */
-     function startNodes(){
-      console.log("Start nodes");
-      context.publish?.(instructionTopic, { data: 'launch_node' });
-      setCurrentState(stateEnum.started);
-    }
-  
-    /**
-     * Publishes a message on the instruction topic to stop nodes
-     */
-    function stopNodes(){
-      console.log("Stop nodes");
-      context.publish?.(instructionTopic, { data: 'stop_node' });
-      setCurrentState(stateEnum.stopped);
-    }
-    
+   function windDirectionChange(event:any) {
+    let v = event.target.value
+    setWindDirection(v);
+    context.publish?.(dataTopic, {
+      command: 'change_wind',
+      data:[String(windSpeed),String(v)]
+    });
+  }
+
+  /**
+ * Publishes a message on the instruction topic to launch the nodes
+ */
+    function startNodes(){
+    console.log("Start nodes");
+    context.publish?.(instructionTopic, { data: 'launch_nodes' });
+    setWindSpeed(-1);
+    setWindDirection(-1);
+    setCurrentState(stateEnum.started);
+  }
+
   /**
    * Launches the simulation
    */
-  function launchSimulation(){
+   function launchSimulation(){
     console.log("Launch simulation");
-    context.publish?.(instructionTopic, { data: 'launch' });
+    context.publish?.(instructionTopic, { data: 'launch_simulation' });
     setCurrentState(stateEnum.simulation);
+  }
+  
+  /**
+   * Publishes a message on the instruction topic to stop nodes
+   */
+  function stopNodes(){
+    console.log("Stop nodes");
+    context.publish?.(instructionTopic, { data: 'stop_nodes' });
+    setCurrentState(stateEnum.stopped);
+  }
+
+  /**
+   * Publishes a message on the instruction topic to stop nodes
+   */
+  function stopSimulation(){
+    console.log("Stop simulation");
+    context.publish?.(instructionTopic, { data: 'stop_simulation' });
+    setCurrentState(stateEnum.stopped);
+  }
+
+  /**
+   * Publishes a message on the instruction topic to stop nodes
+   */
+   function restartSimulation(){
+    console.log("Stop simulation");
+    context.publish?.(instructionTopic, { data: 'restart_simulation' });
+    setCurrentState(stateEnum.stopped);
   }
 
   function getBottomButtons(){
@@ -125,7 +204,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
       case stateEnum.started:
         return <><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></>
       case stateEnum.simulation:
-        return <><button style={buttonStyle} onClick={stopNodes}>Stop simulation</button><button style={buttonStyle} onClick={stopNodes}>Restart simulation</button></>
+        return <><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></>
       default:
         return <h1>404 not found</h1>;
     }
@@ -141,26 +220,38 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
         <h1 style={{textAlign:'center'}}>Simulator</h1>
         <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
           <div style={{display:'flex', alignItems:'center'}}> 
-            Wind speed : <input type="range" min="0" max="50" defaultValue={picker} onChange={handleChange}/> {picker}</div>
+            <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
           </div>
+          <div style={{display:'flex', alignItems:'center'}}> 
+            Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
+          </div>
+        </div>
         <div style={{display:'flex', justifyContent:'space-evenly'}}>{getBottomButtons()}</div>
       </div>
     );
   }
-  
 
-    // Temporary test layout
-    const myelem = (
-      <div style={{overflowY: 'scroll'}}>
-        <h1>Test</h1>
-        <div>{picker} : <input type="range" min="0" max="50" defaultValue={picker} onChange={handleChange}/></div>
-      </div>
-    );
-    myelem
+  /**
+   * Select the page to render acording to the currentPage value
+   * @returns Returns the current page to render
+   */
+   function panelSelector(){
+    switch(currentStateSimu){
+      case "1":
+      case "2":
+        return <div><h1>Please launch a configuration</h1></div>;
+      case "3":
+      case "4":
+      case "5":
+        return <LaunchPanel/>;
+      default:
+        return <h1>404 page not found</h1>;
+    }
+  }
 
   const layout = (
     <div style={{display:'flex', justifyContent:'center', height:'100%'}}>
-      <LaunchPanel/>
+      {panelSelector()}
     </div>
   );
 
