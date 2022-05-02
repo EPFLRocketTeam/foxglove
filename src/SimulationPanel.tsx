@@ -210,11 +210,64 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     }
   }
 
+  function PreLaunchPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+    return (
+      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+        <h1 style={{textAlign:'center'}}>Simulator</h1>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={startNodes}>Stard nodes</button></div>
+      </div>
+    );
+  }
+
+  function LaunchingPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+    return (
+      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+        <h1 style={{textAlign:'center'}}>Simulator</h1>
+        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+          <h1 style={{textAlign:'center'}}>Launching nodes...</h1>
+        </div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
+      </div>
+    );
+  }
+  LaunchingPanel
+
+  
   /**
    * Generate the simulation panel layout
    * @returns Returns the layout of the panel to handle the simulation
    */
    function LaunchPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
     return (
       <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
         <h1 style={{textAlign:'center'}}>Simulator</h1>
@@ -226,7 +279,42 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
             Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
           </div>
         </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}>{getBottomButtons()}</div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
+      </div>
+    );
+  }
+
+  function SimulationPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+    return (
+      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+        <h1 style={{textAlign:'center'}}>Simulator</h1>
+        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+          <div style={{display:'flex', alignItems:'center'}}> 
+            <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
+          </div>
+          <div style={{display:'flex', alignItems:'center'}}> 
+            Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
+          </div>
+        </div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></div>
+      </div>
+    );
+  }
+
+  function SelectConfigPanel(){
+    return (
+      <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
+        <h1 style={{textAlign:'center'}}>Please launch a configuration</h1>
       </div>
     );
   }
@@ -239,11 +327,13 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     switch(currentStateSimu){
       case "1":
       case "2":
-        return <div><h1>Please launch a configuration</h1></div>;
+        return <SelectConfigPanel/>;
       case "3":
+        return <PreLaunchPanel/>;
       case "4":
-      case "5":
         return <LaunchPanel/>;
+      case "5":
+        return <SimulationPanel/>;
       default:
         return <h1>404 page not found</h1>;
     }
