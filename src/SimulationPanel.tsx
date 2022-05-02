@@ -9,11 +9,11 @@ const stateTopic = "/simulation_state";
 updateTopic
 const dataTopic = "/data";
 
-const stateEnum = Object.freeze({"not_started":-1, "test": 0,"stopped": 1, "started": 2, "simulation": 3});
+const stateEnum = Object.freeze({"not_started":-1, "test": 0,"stopped": 1, "starting": 2, "started": 3, "simulation": 4});
 
 function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
   //const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [currentState, setCurrentState] = useState<Number>(stateEnum.stopped);
+  const [currentState, setCurrentState] = useState<Number>(stateEnum.not_started);
 
   const [windSpeed, setWindSpeed] = useState<number>(-1);
   const [windDirection, setWindDirection] = useState<number>(-1);
@@ -53,12 +53,16 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
                   setConfigName((tmp.data)[0] as string)
                   break;
                 case 4:
+                  setCurrentState(stateEnum.starting)
+                  setConfigName((tmp.data)[0] as string)
+                  break;
+                case 5:
                   setCurrentState(stateEnum.started)
                   setConfigName((tmp.data)[0] as string)
                   setWindSpeed(Number((tmp.data)[1] as string))
                   setWindDirection(Number((tmp.data)[2] as string))
                   break;
-                case 5:
+                case 6:
                   setCurrentState(stateEnum.simulation)
                   setConfigName((tmp.data)[0] as string)
                   setWindSpeed(Number((tmp.data)[1] as string))
@@ -147,7 +151,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     context.publish?.(instructionTopic, { data: 'launch_nodes' });
     setWindSpeed(-1);
     setWindDirection(-1);
-    setCurrentState(stateEnum.started);
+    setCurrentState(stateEnum.starting);
   }
 
   /**
@@ -186,30 +190,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     setCurrentState(stateEnum.stopped);
   }
 
-  function getBottomButtons(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
-
-    switch(currentState){
-      case stateEnum.stopped:
-        return <button style={buttonStyle} onClick={startNodes}>Stard nodes</button>;
-      case stateEnum.started:
-        return <><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></>
-      case stateEnum.simulation:
-        return <><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></>
-      default:
-        return <h1>404 not found</h1>;
-    }
-  }
-
   function PreLaunchPanel(){
     let buttonStyle = {
       backgroundColor:'#4d4d4d', 
@@ -224,33 +204,25 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     return (
       <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
         <h1 style={{textAlign:'center'}}>Simulator</h1>
+        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+          
+        </div>
         <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={startNodes}>Stard nodes</button></div>
       </div>
     );
   }
 
   function LaunchingPanel(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
     return (
       <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
         <h1 style={{textAlign:'center'}}>Simulator</h1>
         <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
           <h1 style={{textAlign:'center'}}>Launching nodes...</h1>
         </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}></div>
       </div>
     );
   }
-  LaunchingPanel
 
   
   /**
@@ -324,15 +296,16 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    * @returns Returns the current page to render
    */
    function panelSelector(){
-    switch(currentStateSimu){
-      case "1":
-      case "2":
+    switch(currentState){
+      case stateEnum.not_started:
         return <SelectConfigPanel/>;
-      case "3":
+      case stateEnum.stopped:
         return <PreLaunchPanel/>;
-      case "4":
+      case stateEnum.starting:
+        return <LaunchingPanel/>;
+      case stateEnum.started:
         return <LaunchPanel/>;
-      case "5":
+      case stateEnum.simulation:
         return <SimulationPanel/>;
       default:
         return <h1>404 page not found</h1>;
