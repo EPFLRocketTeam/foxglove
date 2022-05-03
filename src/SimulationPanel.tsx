@@ -23,7 +23,7 @@ const dataTopic = "/data";
 const stateEnum = Object.freeze({"not_started":-1, "test": 0,"stopped": 1, "starting": 2, "started": 3, "simulation": 4});
 
 function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
-  const [currentState, setCurrentState] = useState<Number>(stateEnum.stopped);
+  const [currentState, setCurrentState] = useState<Number>(stateEnum.not_started);
 
   const [windSpeed, setWindSpeed] = useState<number>(-1);
   const [windDirection, setWindDirection] = useState<number>(-1);
@@ -204,7 +204,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
       <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
         <h1 style={{textAlign:'center'}}>Simulator</h1>
         <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-          
+
         </div>
         <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={startNodes}>Stard nodes</button></div>
       </div>
