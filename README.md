@@ -1,17 +1,48 @@
-# Using foxglove as User Interface
-To be able to use the foxglove, you first have to install it at this link : https://foxglove.dev/
+# Setup
+1. Download the program file for foxglove https://foxglove.dev/download
+2. Install Foxglove studio: Open a terminal where you downloaded the file and install the version of the file you downloaded (replace the * by your version)
+```bash
+sudo apt install ./foxglove-studio-*.deb
+```
+To update the version when it is installed :
+```bash
+sudo apt update
+sudo apt install foxglove-studio
+```
+3. Install Beautifulsoup4 for python
 
-When you lauch the app, you have to choose to which ROS connection you want to connect. Typically to connect to the real_time_simulator, it will be "Open connections" -> "ROS 1" leaving the default values (ROS_MASTER_URI = http://localhost:11311, ROS_HOSTNAME = {your_hostname})
+```bash
+pip install beautifulsoup4
+```
+4. Clone the repo of foxglove
 
-Now that you are connected to your ROS ecosystem, you will need to change the path to ROS so that foxglove knows where to find the ROS packages. To do that, on the foxglove software, there is a small gear at the bottom left of the screen to go to the preferences. Change the ROS_PACKAGE_PATH parameter to your ROS package location. It should look something like /home/{username}/catkin_ws/src
+```bash
+mkdir ~/foxglove
+cd ~/foxglove
+git clone https://github.com/EPFLRocketTeam/foxglove.git
+```
+5. Add the extension
 
-Now, you can install the extension :
+```bash
+mkdir -p ~/.foxglove-studio/extensions
+cp ~/foxglove/foxglove/EPFL\ Rocket\ Team.real_time_simulator-1.0.0.foxe ~/.foxglove-studio/extensions/EPFL\ Rocket\ Team.real_time_simulator-1.0.0.foxe
+```
+6. Go to ~/.foxglove-studio/extensions and extract the file (right click -> Extract here)
+7. If it real_time_simulator doesn't have a /log folder
+```bash
+cd ~/catkin_ws/src/real_time_simulator/
+mkdir log
+cd log
+touch log.bag
+```
 
-If you have access to the .foxe file, unpack it and put it in your ~/.foxglove-studio/extensions folder.
+8. Launch foxglove (No need to connect to ROS)
+9. In the Layouts tab (second from the top on the left), Click on the file "Import layout" and import the two layouts that are in /home/foxglove/foxglove/layouts
+10. In foxglove, at the bottom left, there is a Preference tab with a screw icon. Click on it and change the ROS_PACKAGE_PATH value with your path to the ROS src : ex. /home/user/catkin_ws/src
 
-If the extension has been published on the marketplace, install it from there.
+11. Close Foxglove studio
+12. Note: In the simulator, only the launchFiles containing "rocket" will be displayed
 
-Otherwise, follow the "Develop an extension" and "Build project" steps below.
 
 # Develop an extension
 You have a tutorial on how to create an extension for foxglove here https://foxglove.dev/docs/studio/extensions/getting-started
