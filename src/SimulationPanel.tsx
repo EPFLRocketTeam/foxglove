@@ -69,8 +69,8 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
                 case 5:
                   setCurrentState(stateEnum.started)
                   setConfigName((tmp.data)[0] as string)
-                  setWindSpeed(Number((tmp.data)[1] as string)- 1000)
-                  setWindDirection(Number((tmp.data)[2] as string)- 1000)
+                  setWindSpeed(Number((tmp.data)[1] as string))
+                  setWindDirection(Number((tmp.data)[2] as string))
                   break;
                 case 6:
                   setCurrentState(stateEnum.simulation)
