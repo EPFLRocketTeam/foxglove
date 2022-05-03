@@ -252,9 +252,13 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
             <FileBar name={item} expand={expanded == item}/>
           )}
          </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle}>Save</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
       </div>
     );
+  }
+
+  function saveParameters(){
+    context.publish?.(instructionTopic, {data: 'save_parameters'});
   }
   
 

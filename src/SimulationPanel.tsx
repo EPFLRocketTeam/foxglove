@@ -2,6 +2,17 @@ import { PanelExtensionContext, RenderState} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
+const buttonStyle = {
+  backgroundColor:'#4d4d4d', 
+  borderRadius:'3px', 
+  display:'inline-block', 
+  color:'#ffffff', 
+  fontSize:'14px', 
+  padding:'12px 30px', 
+  marginBottom:'16px',
+  border:'none'
+};
+
 
 const instructionTopic = "/instructions";
 const updateTopic = "/updates";
@@ -12,8 +23,7 @@ const dataTopic = "/data";
 const stateEnum = Object.freeze({"not_started":-1, "test": 0,"stopped": 1, "starting": 2, "started": 3, "simulation": 4});
 
 function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
-  //const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [currentState, setCurrentState] = useState<Number>(stateEnum.not_started);
+  const [currentState, setCurrentState] = useState<Number>(stateEnum.stopped);
 
   const [windSpeed, setWindSpeed] = useState<number>(-1);
   const [windDirection, setWindDirection] = useState<number>(-1);
@@ -21,6 +31,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
 
   const [currentStateSimu, setCurrentStateSimu] = useState<string>("1");
+  currentStateSimu
   const [configName, setConfigName] = useState<string>("None");
   configName
 
@@ -30,15 +41,14 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     context.onRender = (renderState: RenderState, done) => {
 
       setRenderDone(done);
-
-      //setTopics(renderState.topics);
-
+      
       renderState.currentFrame?.forEach(element => {
         switch (element.topic) {
           case stateTopic:
             let tmp = element.message as {command:string,data: string[]};
-            if(currentStateSimu != tmp.command ){
-              setCurrentStateSimu(tmp.command)
+            if(currentStateSimu != tmp.command){
+              
+              setCurrentStateSimu(tmp.command);
               switch(Number(tmp.command)){
                 case 1:
                   setCurrentState(stateEnum.not_started)
@@ -59,8 +69,8 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
                 case 5:
                   setCurrentState(stateEnum.started)
                   setConfigName((tmp.data)[0] as string)
-                  setWindSpeed(Number((tmp.data)[1] as string))
-                  setWindDirection(Number((tmp.data)[2] as string))
+                  setWindSpeed(Number((tmp.data)[1] as string)- 1000)
+                  setWindDirection(Number((tmp.data)[2] as string)- 1000)
                   break;
                 case 6:
                   setCurrentState(stateEnum.simulation)
@@ -72,15 +82,15 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
                   break;
                 }
               }
-              break;
+            break;
           default:
-            
             break;
         }
+        
       });
-    };
 
-    //context.watch("topics");
+    
+    };
 
     context.watch("currentFrame");
 
@@ -114,8 +124,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     renderDone?.();
   }, [renderDone]);
   
-  //messages;
-  //topics;
 
   /**
    * Handles picker
@@ -191,16 +199,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
   }
 
   function PreLaunchPanel(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
+    
     return (
       <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
         <h1 style={{textAlign:'center'}}>Simulator</h1>
@@ -220,65 +219,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
           <h1 style={{textAlign:'center'}}>Launching nodes...</h1>
         </div>
         <div style={{display:'flex', justifyContent:'space-evenly'}}></div>
-      </div>
-    );
-  }
-
-  
-  /**
-   * Generate the simulation panel layout
-   * @returns Returns the layout of the panel to handle the simulation
-   */
-   function LaunchPanel(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
-    return (
-      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
-        <h1 style={{textAlign:'center'}}>Simulator</h1>
-        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-          <div style={{display:'flex', alignItems:'center'}}> 
-            <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
-          </div>
-          <div style={{display:'flex', alignItems:'center'}}> 
-            Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
-          </div>
-        </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
-      </div>
-    );
-  }
-
-  function SimulationPanel(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
-    return (
-      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
-        <h1 style={{textAlign:'center'}}>Simulator</h1>
-        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-          <div style={{display:'flex', alignItems:'center'}}> 
-            <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
-          </div>
-          <div style={{display:'flex', alignItems:'center'}}> 
-            Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
-          </div>
-        </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></div>
       </div>
     );
   }
@@ -304,9 +244,9 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
       case stateEnum.starting:
         return <LaunchingPanel/>;
       case stateEnum.started:
-        return <LaunchPanel/>;
+        return <LaunchPanel windSpeed={windSpeed} windDirection={windDirection} windSpeedChange={windSpeedChange} windDirectionChange={windDirectionChange} launchSimulation={launchSimulation} stopNodes={stopNodes}/>;
       case stateEnum.simulation:
-        return <SimulationPanel/>;
+        return <RocketSimulationPanel windSpeed={windSpeed} windDirection={windDirection} windSpeedChange={windSpeedChange} windDirectionChange={windDirectionChange} restartSimulation={restartSimulation} stopSimulation={stopSimulation}/>;
       default:
         return <h1>404 page not found</h1>;
     }
@@ -319,6 +259,46 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
   );
 
   return layout;
+}
+
+function RocketSimulationPanel({windSpeed, windSpeedChange, windDirection, windDirectionChange, stopSimulation, restartSimulation}:{windSpeed:number, windSpeedChange:(event:any)=>void,windDirection:number,windDirectionChange:(event:any)=>void, stopSimulation:()=>void, restartSimulation:()=>void}){
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+      <h1 style={{textAlign:'center'}}>Simulator</h1>
+      <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
+        </div>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
+        </div>
+      </div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></div>
+    </div>
+  );
+}
+
+/**
+   * Generate the simulation panel layout
+   * @returns Returns the layout of the panel to handle the simulation
+   */
+ function LaunchPanel({windSpeed, windSpeedChange, windDirection, windDirectionChange, launchSimulation, stopNodes}:{windSpeed:number, windSpeedChange:(event:any)=>void,windDirection:number,windDirectionChange:(event:any)=>void, launchSimulation:()=>void, stopNodes:()=>void}){
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+      <h1 style={{textAlign:'center'}}>Simulator</h1>
+      <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
+        </div>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
+        </div>
+      </div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
+    </div>
+  );
 }
 
 export function initSimulationPanel(context: PanelExtensionContext) {
