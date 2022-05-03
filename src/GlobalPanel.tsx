@@ -2,9 +2,6 @@ import { PanelExtensionContext, RenderState, Topic} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
 import {ArrowLeft} from '@emotion-icons/bootstrap/ArrowLeft'
 import ReactDOM from "react-dom";
-//Currently not working, waiting for update from foxglove
-//import { Button, Spinner } from 'reactstrap';
-//import 'bootstrap/dist/css/bootstrap.css';
 
 // Topics
 const instructionTopic ="/instructions";
@@ -40,6 +37,57 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
 
+    // tell the panel context that we care about any update to the _topic_ field of RenderState
+    context.watch("topics");
+
+    context.watch("parameters");
+
+    // tell the panel context we want messages for the current frame for topics we've subscribed to
+    // This corresponds to the _currentFrame_ field of render state.
+    context.watch("currentFrame");
+
+    // subscribe to topics
+    context.subscribe([testsTopic,updateTopic, dataTopic, stateTopic]);
+
+    // Advertise instruction topic
+    context.advertise?.(instructionTopic, "std_msgs/String", {
+      datatypes: new Map(
+        Object.entries({
+          "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
+        }),
+      ),
+    });
+
+    // Advertise data topic
+    context.advertise?.(dataTopic, "real_time_simulator/Data", {
+      datatypes: new Map(
+        Object.entries({
+          "real_time_simulator/Data": {definitions: [
+            { type: "string", name: "command"},
+            { type: "string", isArray:true, name: "data"},
+          ]}
+        }),
+      ),
+    });
+
+    // Advertise update topic
+    context.advertise?.(updateTopic, "real_time_simulator/Update", {
+      datatypes: new Map(
+        Object.entries({
+          "real_time_simulator/Update": {definitions: [
+            { type: "string", name: "config"},
+            { type: "string", name: "parameter"},
+            { type: "string", name: "value"},
+          ]}
+        }),
+      ),
+    });
+
+    
+
+  }, []);
+
+  useEffect(() => {
     // The render handler could be invoked as often as 60hz during playback if fields are changing often.
     context.onRender = (renderState: RenderState, done) => {
 
@@ -104,58 +152,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
               break;
           }
         });
-        
     };
-
-    // tell the panel context that we care about any update to the _topic_ field of RenderState
-    context.watch("topics");
-
-    context.watch("parameters");
-
-    // tell the panel context we want messages for the current frame for topics we've subscribed to
-    // This corresponds to the _currentFrame_ field of render state.
-    context.watch("currentFrame");
-
-    // subscribe to topics
-    context.subscribe([testsTopic,updateTopic, dataTopic, stateTopic]);
-
-    // Advertise instruction topic
-    context.advertise?.(instructionTopic, "std_msgs/String", {
-      datatypes: new Map(
-        Object.entries({
-          "std_msgs/String": { definitions: [{ name: "data", type: "string" }] },
-        }),
-      ),
-    });
-
-    // Advertise data topic
-    context.advertise?.(dataTopic, "real_time_simulator/Data", {
-      datatypes: new Map(
-        Object.entries({
-          "real_time_simulator/Data": {definitions: [
-            { type: "string", name: "command"},
-            { type: "string", isArray:true, name: "data"},
-          ]}
-        }),
-      ),
-    });
-
-    // Advertise update topic
-    context.advertise?.(updateTopic, "real_time_simulator/Update", {
-      datatypes: new Map(
-        Object.entries({
-          "real_time_simulator/Update": {definitions: [
-            { type: "string", name: "config"},
-            { type: "string", name: "parameter"},
-            { type: "string", name: "value"},
-          ]}
-        }),
-      ),
-    });
-
-    
-
-  }, []);
+  }, [currentState]);
 
   // invoke the done callback once the render is complete
   useEffect(() => {
@@ -175,51 +173,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       value: '10'
     });
   }
-
-  function onChange(event:any){
-    let v = String(event.target.value)
-    if(v.includes(',')){
-      v = '[' + v + ']'
-    }
-    context.publish?.(updateTopic, {
-      config: expanded,
-      parameter: String(event.target.previousElementSibling.value),
-      value: v
-    });
-  }
-
-  function FileParameters({name}: {name:string}){
-    updateValue;
-    let params: [string,string][] = []
-    if(typeof parameters !== "undefined"){
-      Array.from(parameters.entries()).forEach(elem => {
-        let k = elem[0].split('/');
-        if(k[1] == name){
-          params = [...params, [k[2] as string, elem[1]]];
-        }
-      })
-    }
-    return (
-      <div><br/>
-      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
-      </div>
-    );
-  }
-
-
-  function FileBar({name, expand} : {name:string, expand:Boolean}){
-    var params = <></>
-    if(expand){
-      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
-    }
-    return (
-      <div>
-        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
-          {params}
-      </div>
-      
-    );
-  }
+  
 
   function backToListConfig(){
     context.publish?.(instructionTopic, {data: 'clear_parameters'});
@@ -258,6 +212,54 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     );
   }
 
+  function FileBar({name, expand} : {name:string, expand:Boolean}){
+    var params = <></>
+    if(expand){
+      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
+    }
+    return (
+      <div>
+        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+          {params}
+      </div>
+      
+    );
+  }
+
+  function FileParameters({name}: {name:string}){
+    updateValue;
+    let params: [string,string][] = []
+    if(typeof parameters !== "undefined"){
+      Array.from(parameters.entries()).forEach(elem => {
+        let k = elem[0].split('/');
+        if(k[1] == name){
+          params = [...params, [k[2] as string, elem[1]]];
+        }
+      })
+    }
+    return (
+      <div><br/>
+      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
+      </div>
+    );
+  }
+
+  function onChange(event:any){
+    let v = String(event.target.value)
+    if(v.includes(',')){
+      v = '[' + v + ']'
+    }
+    context.publish?.(updateTopic, {
+      config: expanded,
+      parameter: String(event.target.previousElementSibling.value),
+      value: v
+    });
+  }
+
+
+  /**
+   * Save parameters
+   */
   function saveParameters(){
     context.publish?.(instructionTopic, {data: 'save_parameters'});
   }
@@ -370,10 +372,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
           <div style={{display:'flex', flexDirection:'column'}}>
             <button style={buttonStyle}
             onClick={getConfigs}>Load configs</button>
-            <button style={buttonStyle}
-            onClick={getConfigs}>Load configs</button>
-            <button style={buttonStyle}
-            onClick={getConfigs}>Load configs</button>
+
           </div>
         </div>
       </div>

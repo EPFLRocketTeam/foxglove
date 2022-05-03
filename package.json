@@ -1,9 +1,9 @@
 {
-  "name": "global-pane",
-  "displayName": "Global Panel",
-  "description": "Global panel for the EPFL Rocket Team ROS simulator",
+  "name": "real_time_simulator",
+  "displayName": "Global Panel real_time_simulator",
+  "description": "Global panel for the EPFL Rocket Team ROS real_time_simulator",
   "publisher": "EPFL Rocket Team",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "UNLICENSED",
   "main": "./dist/extension.js",
   "scripts": {

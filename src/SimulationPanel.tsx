@@ -37,7 +37,14 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
+    context.watch("currentFrame");
 
+    context.subscribe([dataTopic, stateTopic]);
+
+  }, []);
+
+  // Refresh the onRender every time the currentStateSime is different from what we set in UI (When the ui is not in the right state)
+  useEffect(() => {
     context.onRender = (renderState: RenderState, done) => {
 
       setRenderDone(done);
@@ -91,12 +98,8 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
 
     
     };
+  }, [currentStateSimu]);
 
-    context.watch("currentFrame");
-
-    context.subscribe([dataTopic, stateTopic]);
-
-  }, []);
 
   // Advertise instruction topic
   context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -199,39 +202,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
     setCurrentState(stateEnum.stopped);
   }
 
-  function PreLaunchPanel(){
-    
-    return (
-      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
-        <h1 style={{textAlign:'center'}}>Simulator</h1>
-        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-
-        </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={startNodes}>Stard nodes</button></div>
-      </div>
-    );
-  }
-
-  function LaunchingPanel(){
-    return (
-      <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
-        <h1 style={{textAlign:'center'}}>Simulator</h1>
-        <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-          <h1 style={{textAlign:'center'}}>Launching nodes...</h1>
-        </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}></div>
-      </div>
-    );
-  }
-
-  function SelectConfigPanel(){
-    return (
-      <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
-        <h1 style={{textAlign:'center'}}>Please launch a configuration</h1>
-      </div>
-    );
-  }
-
   /**
    * Select the page to render acording to the currentPage value
    * @returns Returns the current page to render
@@ -241,7 +211,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
       case stateEnum.not_started:
         return <SelectConfigPanel/>;
       case stateEnum.stopped:
-        return <PreLaunchPanel/>;
+        return <PreLaunchPanel startNodes={startNodes}/>;
       case stateEnum.starting:
         return <LaunchingPanel/>;
       case stateEnum.started:
@@ -262,20 +232,49 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
   return layout;
 }
 
-function RocketSimulationPanel({windSpeed, windSpeedChange, windDirection, windDirectionChange, stopSimulation, restartSimulation}:{windSpeed:number, windSpeedChange:(event:any)=>void,windDirection:number,windDirectionChange:(event:any)=>void, stopSimulation:()=>void, restartSimulation:()=>void}){
 
+/**
+ * Generate the panel when no config has been launched
+ * @returns the panel when no config has been launched
+ */
+ function SelectConfigPanel(){
+  return (
+    <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
+      <h1 style={{textAlign:'center'}}>Please launch a configuration</h1>
+    </div>
+  );
+}
+
+
+/**
+ * Generate the panel to start the nodes
+ * @returns the panel to start the nodes
+ */
+function PreLaunchPanel({startNodes} : {startNodes:() => void}){
+    
   return (
     <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
       <h1 style={{textAlign:'center'}}>Simulator</h1>
       <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
-        <div style={{display:'flex', alignItems:'center'}}> 
-          <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
-        </div>
-        <div style={{display:'flex', alignItems:'center'}}> 
-          Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
-        </div>
+
       </div>
-      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={startNodes}>Stard nodes</button></div>
+    </div>
+  );
+}
+
+/**
+ * Generate the panel when the nodes are launching
+ * @returns the panel when the nodes are launching
+ */
+function LaunchingPanel(){
+  return (
+    <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+      <h1 style={{textAlign:'center'}}>Simulator</h1>
+      <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+        <h1 style={{textAlign:'center'}}>Launching nodes...</h1>
+      </div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}></div>
     </div>
   );
 }
@@ -291,16 +290,39 @@ function RocketSimulationPanel({windSpeed, windSpeedChange, windDirection, windD
       <h1 style={{textAlign:'center'}}>Simulator</h1>
       <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
         <div style={{display:'flex', alignItems:'center'}}> 
-          <div>Wind speed     : <input type="range" min="0" max="50" defaultValue={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
+          <div>Wind speed     : <input type="range" min="0" max="50" value={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
         </div>
         <div style={{display:'flex', alignItems:'center'}}> 
-          Wind direction : <input type="range" min="0" max="359" defaultValue={windDirection} onChange={windDirectionChange}/> {windDirection}
+          Wind direction : <input type="range" min="0" max="359" value={windDirection} onChange={windDirectionChange}/> {windDirection}
         </div>
       </div>
       <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={launchSimulation}>Start Simulation</button><button style={buttonStyle} onClick={stopNodes}>Stop nodes</button></div>
     </div>
   );
 }
+
+/**
+ * Generate the panel of the simulation
+ * @returns the panel of the simulation
+ */
+function RocketSimulationPanel({windSpeed, windSpeedChange, windDirection, windDirectionChange, stopSimulation, restartSimulation}:{windSpeed:number, windSpeedChange:(event:any)=>void,windDirection:number,windDirectionChange:(event:any)=>void, stopSimulation:()=>void, restartSimulation:()=>void}){
+
+  return (
+    <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+      <h1 style={{textAlign:'center'}}>Simulator</h1>
+      <div style={{flexGrow:'1', display:'flex', flexDirection:'column', alignItems:'center'}}>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          <div>Wind speed     : <input type="range" min="0" max="50" value={windSpeed} onChange={windSpeedChange}/></div> <div>{windSpeed}</div>
+        </div>
+        <div style={{display:'flex', alignItems:'center'}}> 
+          Wind direction : <input type="range" min="0" max="359" value={windDirection} onChange={windDirectionChange}/> {windDirection}
+        </div>
+      </div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={stopSimulation}>Stop simulation</button><button style={buttonStyle} onClick={restartSimulation}>Restart simulation</button></div>
+    </div>
+  );
+}
+
 
 export function initSimulationPanel(context: PanelExtensionContext) {
   ReactDOM.render(<SimulationPanel context={context} />, context.panelElement);
