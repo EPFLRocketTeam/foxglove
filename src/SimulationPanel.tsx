@@ -47,7 +47,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
           case stateTopic:
             let tmp = element.message as {command:string,data: string[]};
             if(currentStateSimu != tmp.command){
-              
+              console.log("Ici")
               setCurrentStateSimu(tmp.command);
               switch(Number(tmp.command)){
                 case 1:
@@ -132,6 +132,7 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    function windSpeedChange(event:any) {
     let v = event.target.value
     setWindSpeed(v);
+    console.error("Wind speed change");
     context.publish?.(dataTopic, {
       command: 'change_wind',
       data:[String(v), String(windDirection)]

@@ -1,5 +1,6 @@
 import { PanelExtensionContext, RenderState, Topic} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
+import {ArrowLeft} from '@emotion-icons/bootstrap/ArrowLeft'
 import ReactDOM from "react-dom";
 //Currently not working, waiting for update from foxglove
 //import { Button, Spinner } from 'reactstrap';
@@ -244,7 +245,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
         <div>
-          <img onClick={backToListConfig} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <ArrowLeft size="48" onClick={backToListConfig} style={{marginLeft:'8px', marginTop:'8px'}}/>
           <h1 style={{textAlign:'center'}}>{configName}</h1>
         </div>
         <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
@@ -291,8 +292,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
         <div style={{width:'100%'}}>
-          <img onClick={() => setCurrentPage(pageEnum.home)} src="/home/mathieu/foxglove/foxglove/src/wbackarrow.png" style={{marginLeft:'8px', marginTop:'8px'}}/>
-              <h1 style={{textAlign:'center'}}>Choose your configuration</h1>
+          <ArrowLeft size="48" onClick={() => setCurrentPage(pageEnum.home)} style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <h1 style={{textAlign:'center'}}>Choose your configuration</h1>
         </div>
         <div>
           <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column'}}>
