@@ -1,6 +1,10 @@
 import { ExtensionContext } from "@foxglove/studio";
-import { initGlobalPanel } from "./GlobalPanel";
+import { initParameterPanel } from "./GlobalPanel";
+import { initNodePanel } from "./NodePanel";
+import { initSimulationPanel } from "./SimulationPanel";
 
 export function activate(extensionContext: ExtensionContext) {
-  extensionContext.registerPanel({ name: "ERT global panel", initPanel: initGlobalPanel });
+  extensionContext.registerPanel({ name: "ERT - Parameter", initPanel: initParameterPanel });
+  extensionContext.registerPanel({ name: "ERT - Node", initPanel: initNodePanel });
+  extensionContext.registerPanel({ name: "ERT - Simulation", initPanel: initSimulationPanel });
 }

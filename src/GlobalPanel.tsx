@@ -1,67 +1,41 @@
-import { PanelExtensionContext, RenderState, Topic, MessageEvent } from "@foxglove/studio";
+import { PanelExtensionContext, RenderState, Topic} from "@foxglove/studio";
 import { useLayoutEffect, useEffect, useState } from "react";
+import {ArrowLeft} from '@emotion-icons/bootstrap/ArrowLeft'
 import ReactDOM from "react-dom";
 
 // Topics
 const instructionTopic ="/instructions";
+const updateTopic = "/updates";
 const dataTopic = "/data";
+const stateTopic = "/simulation_state";
+const testsTopic = "/tests";
 
 // Pages
-const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_config": 3, "simulation": 4});
+const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_param": 3, "launched": 4});
 
 
 
-function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
+function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [_messages, setMessages] = useState<readonly MessageEvent<unknown>[] | undefined >();
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
-  const [files, setFiles] = useState<string[]>([]);
+
+  const [list, setList] = useState<unknown[]>([]);
+  list;
+
+  const [recentConfigs, setRecentConfigs] = useState<string[]>([]);
+  const [configs, setConfigs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<Number>(pageEnum.home);
+  const [expanded, setExpanded] = useState<string>("");
   
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
+  const [parameterFiles, setParameterFiles] = useState<string[]>([]);
   
+  const [configName, setConfigName] = useState<string>("None");
+  
+  const [currentState, setCurrentState] = useState<string>("1");
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
-    // The render handler could be invoked as often as 60hz during playback if fields are changing often.
-    context.onRender = (renderState: RenderState, done) => {
-
-      // Set the done callback into a state variable to trigger a re-render.
-      setRenderDone(done);
-      
-      // Set topics
-      setTopics(renderState.topics);
-
-      // Set parameters
-      setParameters(renderState.parameters);
-      
-
-      // currentFrame has messages on subscribed topics since the last render call
-      setMessages(renderState.currentFrame);
-
-      // Rederects all messages into the correct list
-      renderState.currentFrame?.forEach(element => {
-          switch (element.topic) {
-            case dataTopic:
-              let temp = element.message as {command:string,data: string[]};
-              switch (temp.command) {
-                case "configs":
-                  setFiles([...temp.data]);
-                  break;
-                default:
-                  break;
-              }
-              break;
-            default:
-              
-              break;
-          }
-        });
-        
-    };
-    topics;
-    parameters;
-
 
     // tell the panel context that we care about any update to the _topic_ field of RenderState
     context.watch("topics");
@@ -73,7 +47,7 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
     context.watch("currentFrame");
 
     // subscribe to topics
-    context.subscribe([dataTopic]);
+    context.subscribe([testsTopic,updateTopic, dataTopic, stateTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -84,32 +58,212 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       ),
     });
 
+    // Advertise data topic
     context.advertise?.(dataTopic, "real_time_simulator/Data", {
-      datatype: new Map(
+      datatypes: new Map(
         Object.entries({
           "real_time_simulator/Data": {definitions: [
-            {type: "string", name: "command"},
-            {type: "string[]", name: "data"},
+            { type: "string", name: "command"},
+            { type: "string", isArray:true, name: "data"},
           ]}
         }),
       ),
     });
 
+    // Advertise update topic
+    context.advertise?.(updateTopic, "real_time_simulator/Update", {
+      datatypes: new Map(
+        Object.entries({
+          "real_time_simulator/Update": {definitions: [
+            { type: "string", name: "config"},
+            { type: "string", name: "parameter"},
+            { type: "string", name: "value"},
+          ]}
+        }),
+      ),
+    });
+
+    
+
   }, []);
+
+  useEffect(() => {
+    // The render handler could be invoked as often as 60hz during playback if fields are changing often.
+    context.onRender = (renderState: RenderState, done) => {
+
+      // Set the done callback into a state variable to trigger a re-render.
+      setRenderDone(done);
+      
+      // Set topics
+      setTopics(renderState.topics);
+
+      // Set parameters
+      setParameters(renderState.parameters);
+
+      // Rederects all messages into the correct list
+      renderState.currentFrame?.forEach(element => {
+          switch (element.topic) {
+            case testsTopic:
+              setList(list => [...list, element.message]);
+              break;
+            case dataTopic:
+              let temp = element.message as {command:string,data: string[]};
+              switch (temp.command) {
+                case "recent_configs":
+                  setRecentConfigs([...temp.data]);
+                  break;
+                case "configs":
+                  setConfigs([...temp.data]);
+                  break;
+                  case "list_parameter_prefix":
+                    setParameterFiles([...temp.data])
+                    break;
+                default:
+                  break;
+              }
+              break;
+              
+            case stateTopic:
+              let tmp = element.message as {command:string,data: string[]};
+              if(currentState != tmp.command ){
+                setCurrentState(tmp.command)
+                switch(Number(tmp.command)){
+                  case 1:
+                    setCurrentPage(pageEnum.home)
+                    setConfigName("None")
+                    break;
+                  case 2:
+                    setCurrentPage(pageEnum.edit_param)
+                    setConfigName((tmp.data)[0] as string)
+                    break;
+                  case 3:
+                  case 4:
+                  case 5:
+                    setCurrentPage(pageEnum.launched)
+                    setConfigName((tmp.data)[0] as string)
+                    break;
+                  default:
+                    break;
+                  }
+                }
+                break;
+            default:
+              
+              break;
+          }
+        });
+    };
+  }, [currentState]);
 
   // invoke the done callback once the render is complete
   useEffect(() => {
     renderDone?.();
   }, [renderDone]);
 
+  topics;
 
   /**
-   * Launches the simulation
+   * Send a message to modify a parameter
    */
-  function launchSimulation(){
-    console.log("Launch simulation");
-    context.publish?.(instructionTopic, { data: 'launch' });
+  function updateValue(){
+    console.log("Update value");
+    context.publish?.(updateTopic, {
+      config: 'rocket',
+      parameter: 'Thrust',
+      value: '10'
+    });
   }
+  
+
+  function backToListConfig(){
+    context.publish?.(instructionTopic, {data: 'clear_parameters'});
+    setCurrentPage(pageEnum.choose_configs);    
+  }
+
+  function ParameterPage(){
+    return <ParameterFilesList list={parameterFiles} />
+  };
+
+  function ParameterFilesList({ list }: {list:string[]}){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'14px', 
+      padding:'12px 30px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+
+    return (
+      <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
+        <div>
+          <ArrowLeft size="48" onClick={backToListConfig} style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <h1 style={{textAlign:'center'}}>{configName}</h1>
+        </div>
+        <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
+         {list.map(item => 
+            <FileBar name={item} expand={expanded == item}/>
+          )}
+         </div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
+      </div>
+    );
+  }
+
+  function FileBar({name, expand} : {name:string, expand:Boolean}){
+    var params = <></>
+    if(expand){
+      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
+    }
+    return (
+      <div>
+        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+          {params}
+      </div>
+      
+    );
+  }
+
+  function FileParameters({name}: {name:string}){
+    updateValue;
+    let params: [string,string][] = []
+    if(typeof parameters !== "undefined"){
+      Array.from(parameters.entries()).forEach(elem => {
+        let k = elem[0].split('/');
+        if(k[1] == name){
+          params = [...params, [k[2] as string, elem[1]]];
+        }
+      })
+    }
+    return (
+      <div><br/>
+      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
+      </div>
+    );
+  }
+
+  function onChange(event:any){
+    let v = String(event.target.value)
+    if(v.includes(',')){
+      v = '[' + v + ']'
+    }
+    context.publish?.(updateTopic, {
+      config: expanded,
+      parameter: String(event.target.previousElementSibling.value),
+      value: v
+    });
+  }
+
+
+  /**
+   * Save parameters
+   */
+  function saveParameters(){
+    context.publish?.(instructionTopic, {data: 'save_parameters'});
+  }
+  
 
   /**
    * This method is used to generate the buttons to select the config
@@ -117,37 +271,44 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
    * @returns Return the component for the button with its onclick set
    */
   function ButtonFile({name}: {name:string}){
+    let buttonStyle = {
+      backgroundColor:'transparent',
+      border:'none',
+      color:'#1BA8FF',
+      fontSize:'14px',
+      marginBottom:'10px'
+    };
+    buttonStyle
     return (
-      <div style={{marginTop:'10px'}}>
-        <button onClick={() => selectConfig(name)}>{name}</button>
-      </div>
+        <button style={buttonStyle} onClick={() => selectConfig(name)}>{name}</button>
     );
   }
+
 
   /**
    * Generate the config panel layout
    * @returns Return the layout of the panel that lists all config files
    */
   function ListConfigs(){
+    
     return (
-      <>
-        <h1 style={{textAlign:'center'}}>Configs</h1>
-        <div>{files.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
-      </>
-    );
-  }
-
-  /**
-   * Generate the simulation panel layout
-   * @returns Returns the layout of the panel to handle the simulation
-   */
-  function LaunchPanel(){
-    return (
-      <>
-        <h1 style={{textAlign:'center'}}>Launch Panel</h1>
-        <div><button onClick={startNodes}>Launch nodes</button><button onClick={stopNodes}>Stop nodes</button></div>
-        <div><button onClick={launchSimulation}>Launch simulation</button></div>
-      </>
+      <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+        <div style={{width:'100%'}}>
+          <ArrowLeft size="48" onClick={() => setCurrentPage(pageEnum.home)} style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <h1 style={{textAlign:'center'}}>Choose your configuration</h1>
+        </div>
+        <div>
+          <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column'}}>
+            <h2 style={{textAlign:'left'}}>Recent</h2>
+            <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column', justifyContent:'left', alignItems:'flex-start'}}>{recentConfigs.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
+          </div>
+          <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column'}}>
+            <h2 style={{textAlign:'left'}}>Configurations</h2>
+            <div style={{paddingLeft:'8px', display:'flex', flexDirection:'column', justifyContent:'left', alignItems:'flex-start'}}>{configs.map(f => <ButtonFile name={f}></ButtonFile>)}</div>
+          </div>
+        </div>
+      </div>
+      
     );
   }
 
@@ -160,25 +321,11 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
       command: 'select_config',
       data:[name]
     });
-    setCurrentPage(pageEnum.simulation);
+    setConfigName(name);
+    setCurrentPage(pageEnum.edit_param);
   }
+
   
-  /**
-   * Publishes a message on the instruction topic to launch the nodes
-   */
-  function startNodes(){
-    console.log("Start nodes");
-    context.publish?.(instructionTopic, { data: 'launch_node' });
-  }
-
-  /**
-   * Publishes a message on the instruction topic to stop nodes
-   */
-  function stopNodes(){
-    console.log("Stop nodes");
-    context.publish?.(instructionTopic, { data: 'stop_node' });
-  }
-
   /**
    * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
    */
@@ -188,17 +335,70 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   }
 
   /**
+   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
+   */
+   function launchConfig(){
+    context.publish?.(instructionTopic, {data: 'launch_config'});
+    setCurrentPage(pageEnum.launched);    
+  }
+
+  /**
+   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
+   */
+   function stopConfig(){
+    context.publish?.(instructionTopic, {data: 'close_config'});
+    setCurrentPage(pageEnum.home);    
+  }
+
+  /**
    * Generates the Home panel layout
    * @returns Returns the layout of the home panel
    */
   function Home(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'16px', 
+      padding:'16px 40px', 
+      marginBottom:'16px',
+      border:'none'
+    };
     return (
-      <>
-        <h1 style={{textAlign:'center'}}>Home</h1>
+      <div style={{height:'100%', display:'flex', justifyContent:'center', alignItems:'center', marginTop:'-100px'}}>
         <div>
-          <button onClick={getConfigs}>Load configs</button>
+          <h1 style={{textAlign:'left'}}>Simulator</h1>
+          <div style={{display:'flex', flexDirection:'column'}}>
+            <button style={buttonStyle}
+            onClick={getConfigs}>Load configs</button>
+
+          </div>
         </div>
-      </>
+      </div>
+    );
+  } 
+
+  /**
+   * Generates the Home panel layout
+   * @returns Returns the layout of the home panel
+   */
+   function LaunchedPanel(){
+    let buttonStyle = {
+      backgroundColor:'#4d4d4d', 
+      borderRadius:'3px', 
+      display:'inline-block', 
+      color:'#ffffff', 
+      fontSize:'16px', 
+      padding:'16px 40px', 
+      marginBottom:'16px',
+      border:'none'
+    };
+    return (
+      <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
+        <h1 style={{textAlign:'center'}}>Parameters have been launched</h1>
+        <button style={buttonStyle} onClick={stopConfig}>Close {configName}</button>
+      </div>
     );
   } 
 
@@ -209,22 +409,22 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
   function panelSelector(){
     switch(currentPage){
       case pageEnum.home:
-        return <Home/>
+        return <Home/>;
       case pageEnum.choose_configs:
-        return <ListConfigs/>
-      case pageEnum.simulation:
-        return <LaunchPanel/>
+        return <ListConfigs/>;
+      case pageEnum.edit_param:
+        return <ParameterPage/>;
+      case pageEnum.launched:
+        return <LaunchedPanel/>
       default:
-        return <h1>404 page not found</h1>
+        return <h1>404 page not found</h1>;
     }
   }
   
   // Main layout
   const layout = (
-    <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
-      <div>
+    <div style={{height:'100%'}}>
       {panelSelector()}
-      </div>
     </div>
   );
   return layout;
@@ -232,6 +432,6 @@ function GlobalPanel({ context }: { context: PanelExtensionContext }): JSX.Eleme
 
 
 
-export function initGlobalPanel(context: PanelExtensionContext) {
-  ReactDOM.render(<GlobalPanel context={context} />, context.panelElement);
+export function initParameterPanel(context: PanelExtensionContext) {
+  ReactDOM.render(<ParameterPanel context={context} />, context.panelElement);
 }
