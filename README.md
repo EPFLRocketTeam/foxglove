@@ -41,7 +41,13 @@ touch log.bag
 10. In foxglove, at the bottom left, there is a Preference tab with a screw icon. Click on it and change the ROS_PACKAGE_PATH value with your path to the ROS src : ex. /home/user/catkin_ws/src
 
 11. Close Foxglove studio
-12. Note: In the simulator, only the launchFiles containing "rocket" will be displayed
+12. You can now launch the simulator by executing the startup.sh script in real_time_simulator
+```bash
+cd ~/catkin_ws
+./src/real_time_simulator/bash_scripts/startup.sh
+```
+
+13. Note: In the simulator, only the launchFiles containing "rocket" will be displayed
 
 
 # Develop an extension
