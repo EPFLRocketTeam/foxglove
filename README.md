@@ -9,10 +9,17 @@ To update the version when it is installed :
 sudo apt update
 sudo apt install foxglove-studio
 ```
-3. Install Beautifulsoup4 for python
+3a. Install Beautifulsoup4 for python
 
 ```bash
 pip install beautifulsoup4
+```
+3b. Install Beautifulsoup4 for python
+
+```bash
+pip install -U pip setuptools wheel
+pip install launchpadlib
+pip install ruamel.yaml
 ```
 4. Clone the repo of foxglove
 
