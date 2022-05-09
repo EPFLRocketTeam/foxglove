@@ -25,15 +25,13 @@ git clone https://github.com/EPFLRocketTeam/foxglove.git
 
 ```bash
 mkdir -p ~/.foxglove-studio/extensions
-cp ~/foxglove/foxglove/EPFL\ Rocket\ Team.real_time_simulator-1.0.0.foxe ~/.foxglove-studio/extensions/EPFL\ Rocket\ Team.real_time_simulator-1.0.0.foxe
+cp ~/foxglove/foxglove/foxglove_extension_1.0.1.foxe ~/.foxglove-studio/extensions/foxglove_extension_1.0.1.foxe
 ```
 6. Go to ~/.foxglove-studio/extensions and extract the file (right click -> Extract here)
-7. If it real_time_simulator doesn't have a /log folder
+7. If real_time_simulator doesn't have a /log folder
 ```bash
 cd ~/catkin_ws/src/real_time_simulator/
 mkdir log
-cd log
-touch log.bag
 ```
 
 8. Launch foxglove (No need to connect to ROS)
@@ -132,7 +130,3 @@ After that, all messages from all topics subsribed that are recieved will be ava
 ```js
 renderState.currentFrame
 ```
-
-# Plan
-
-![Screenshot](plan.png)
