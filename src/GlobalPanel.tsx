@@ -209,11 +209,11 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   function FileBar({name, expand} : {name:string, expand:Boolean}){
     var params = <></>
     if(expand){
-      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
+      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid', borderRadius:'4px'}}><FileParameters name={name}/></div>
     }
     return (
       <div>
-        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px', borderRadius:'4px', textTransform:'capitalize'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
           {params}
       </div>
       
@@ -231,8 +231,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       })
     }
     return (
-      <div><br/>
-      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
+      <div style={{margin:'8px'}}><br/>
+      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={elem[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={elem[1]} onBlur={onChange}></input></div>)}
       </div>
     );
   }
@@ -353,7 +353,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{height:'100%', display:'flex', justifyContent:'center', alignItems:'center', marginTop:'-100px'}}>
         <div>
-          <h1 style={{textAlign:'left'}}>Simulator</h1>
+          <h1 style={{textAlign:'left', paddingBottom:'0px', marginBottom:'0px'}}>Simulator</h1>
+          <h2 style={{marginTop:'0px', paddingTop:'0px', opacity:'0.7'}}>By EPFL Rocket Team</h2>
           <div style={{display:'flex', flexDirection:'column'}}>
             <button style={buttonStyle} onClick={getConfigs}>Load configs</button>
           </div>
