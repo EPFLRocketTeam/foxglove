@@ -3,7 +3,7 @@
   "displayName": "Global Panel real_time_simulator",
   "description": "Global panel for the EPFL Rocket Team ROS real_time_simulator",
   "publisher": "EPFL Rocket Team",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "UNLICENSED",
   "main": "./dist/extension.js",
   "scripts": {
