@@ -8,7 +8,6 @@ const instructionTopic ="/instructions";
 const updateTopic = "/updates";
 const dataTopic = "/data";
 const stateTopic = "/simulation_state";
-const testsTopic = "/tests";
 
 // Pages
 const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_param": 3, "launched": 4});
@@ -16,23 +15,21 @@ const pageEnum = Object.freeze({"home": 1, "choose_configs": 2, "edit_param": 3,
 
 
 function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.Element {
+  const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
+  
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [parameters, setParameters] = useState<ReadonlyMap<String, any> | undefined >();
-
-  const [list, setList] = useState<unknown[]>([]);
-  list;
 
   const [recentConfigs, setRecentConfigs] = useState<string[]>([]);
   const [configs, setConfigs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<Number>(pageEnum.home);
   const [expanded, setExpanded] = useState<string>("");
   
-  const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
   const [parameterFiles, setParameterFiles] = useState<string[]>([]);
   
   const [configName, setConfigName] = useState<string>("None");
   
-  const [currentState, setCurrentState] = useState<string>("1");
+  const [currentState, setCurrentState] = useState<Boolean>(false);
 
   // We use a layout effect to setup render handling for our panel. We also setup some topic subscriptions.
   useLayoutEffect(() => {
@@ -47,7 +44,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     context.watch("currentFrame");
 
     // subscribe to topics
-    context.subscribe([testsTopic,updateTopic, dataTopic, stateTopic]);
+    context.subscribe([updateTopic, dataTopic, stateTopic]);
 
     // Advertise instruction topic
     context.advertise?.(instructionTopic, "std_msgs/String", {
@@ -103,9 +100,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       // Rederects all messages into the correct list
       renderState.currentFrame?.forEach(element => {
           switch (element.topic) {
-            case testsTopic:
-              setList(list => [...list, element.message]);
-              break;
             case dataTopic:
               let temp = element.message as {command:string,data: string[]};
               switch (temp.command) {
@@ -125,20 +119,32 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
               
             case stateTopic:
               let tmp = element.message as {command:string,data: string[]};
-              if(currentState != tmp.command ){
-                setCurrentState(tmp.command)
+              if(!currentState){
+                setCurrentState(true)
                 switch(Number(tmp.command)){
                   case 1:
                     setCurrentPage(pageEnum.home)
                     setConfigName("None")
                     break;
                   case 2:
-                    setCurrentPage(pageEnum.edit_param)
-                    setConfigName((tmp.data)[0] as string)
+                    setCurrentPage(pageEnum.choose_configs)
+                    let n1 = Number(tmp.data[0] as string)
+                    let n2 = Number(tmp.data[1] as string)
+                    let array = tmp.data
+                    let recents = array.slice(2, n1 + 2)
+                    let all = array.slice(n1 + 2, n1 + n2 + 2)
+                    setRecentConfigs(recents)
+                    setConfigs(all)
                     break;
                   case 3:
+                    setCurrentPage(pageEnum.edit_param)
+                    setConfigName((tmp.data)[0] as string)
+                    let n = Number(tmp.data[1] as string)
+                    setParameterFiles([...tmp.data.slice(2, n + 2)])
+                    break;
                   case 4:
                   case 5:
+                  case 6:
                     setCurrentPage(pageEnum.launched)
                     setConfigName((tmp.data)[0] as string)
                     break;
@@ -161,18 +167,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   }, [renderDone]);
 
   topics;
-
-  /**
-   * Send a message to modify a parameter
-   */
-  function updateValue(){
-    console.log("Update value");
-    context.publish?.(updateTopic, {
-      config: 'rocket',
-      parameter: 'Thrust',
-      value: '10'
-    });
-  }
   
 
   function backToListConfig(){
@@ -207,7 +201,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
             <FileBar name={item} expand={expanded == item}/>
           )}
          </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={launchConfig}>Launch</button></div>
+        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={stopConfig}>Close config</button></div>
       </div>
     );
   }
@@ -215,11 +209,11 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   function FileBar({name, expand} : {name:string, expand:Boolean}){
     var params = <></>
     if(expand){
-      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid'}}><FileParameters name={name}/></div>
+      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid', borderRadius:'4px'}}><FileParameters name={name}/></div>
     }
     return (
       <div>
-        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px', borderRadius:'4px', textTransform:'capitalize'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
           {params}
       </div>
       
@@ -227,7 +221,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   }
 
   function FileParameters({name}: {name:string}){
-    updateValue;
     let params: [string,string][] = []
     if(typeof parameters !== "undefined"){
       Array.from(parameters.entries()).forEach(elem => {
@@ -238,8 +231,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       })
     }
     return (
-      <div><br/>
-      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' value={elem[0]}></input><input type='text' defaultValue={elem[1]} onBlur={onChange}></input></div>)}
+      <div style={{margin:'8px'}}><br/>
+      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={elem[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={elem[1]} onBlur={onChange}></input></div>)}
       </div>
     );
   }
@@ -312,6 +305,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     );
   }
 
+
   /**
    * Sends a message on the data topic to give the selected config file and changes the current page to the simulation page
    * @param name Name of the selected config
@@ -324,7 +318,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     setConfigName(name);
     setCurrentPage(pageEnum.edit_param);
   }
-
   
   /**
    * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
@@ -332,14 +325,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   function getConfigs(){
     context.publish?.(instructionTopic, {data: 'get_configs'});
     setCurrentPage(pageEnum.choose_configs);    
-  }
-
-  /**
-   * Publishes a message on the instruction topic to get all config that can be launched and changes the page to the list of configs.
-   */
-   function launchConfig(){
-    context.publish?.(instructionTopic, {data: 'launch_config'});
-    setCurrentPage(pageEnum.launched);    
   }
 
   /**
@@ -368,11 +353,10 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{height:'100%', display:'flex', justifyContent:'center', alignItems:'center', marginTop:'-100px'}}>
         <div>
-          <h1 style={{textAlign:'left'}}>Simulator</h1>
+          <h1 style={{textAlign:'left', paddingBottom:'0px', marginBottom:'0px'}}>Simulator</h1>
+          <h2 style={{marginTop:'0px', paddingTop:'0px', opacity:'0.7'}}>By EPFL Rocket Team</h2>
           <div style={{display:'flex', flexDirection:'column'}}>
-            <button style={buttonStyle}
-            onClick={getConfigs}>Load configs</button>
-
+            <button style={buttonStyle} onClick={getConfigs}>Load configs</button>
           </div>
         </div>
       </div>
@@ -384,20 +368,9 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
    * @returns Returns the layout of the home panel
    */
    function LaunchedPanel(){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'16px', 
-      padding:'16px 40px', 
-      marginBottom:'16px',
-      border:'none'
-    };
     return (
       <div style={{height:'100%', display:'flex', alignItems:'center', flexDirection:'column'}}>
-        <h1 style={{textAlign:'center'}}>Parameters have been launched</h1>
-        <button style={buttonStyle} onClick={stopConfig}>Close {configName}</button>
+        <h1 style={{textAlign:'center'}}>The project is currently launched</h1>
       </div>
     );
   } 
