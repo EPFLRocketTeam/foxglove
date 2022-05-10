@@ -256,6 +256,14 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   function saveParameters(){
     context.publish?.(instructionTopic, {data: 'save_parameters'});
   }
+
+  /**
+   * Go back to home
+   */
+  function backToHome(){
+    context.publish?.(instructionTopic, {data: 'clear_configs'});
+    setCurrentPage(pageEnum.home)
+  }
   
 
   /**
@@ -277,7 +285,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     );
   }
 
-
   /**
    * Generate the config panel layout
    * @returns Return the layout of the panel that lists all config files
@@ -287,7 +294,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     return (
       <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
         <div style={{width:'100%'}}>
-          <ArrowLeft size="48" onClick={() => setCurrentPage(pageEnum.home)} style={{marginLeft:'8px', marginTop:'8px'}}/>
+          <ArrowLeft size="48" onClick={backToHome} style={{marginLeft:'8px', marginTop:'8px'}}/>
           <h1 style={{textAlign:'center'}}>Choose your configuration</h1>
         </div>
         <div>
