@@ -56,10 +56,10 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     });
 
     // Advertise data topic
-    context.advertise?.(dataTopic, "real_time_simulator/Data", {
+    context.advertise?.(dataTopic, "real_time_simulator/FoxgloveDataMessage", {
       datatypes: new Map(
         Object.entries({
-          "real_time_simulator/Data": {definitions: [
+          "real_time_simulator/FoxgloveDataMessage": {definitions: [
             { type: "string", name: "command"},
             { type: "string", isArray:true, name: "data"},
           ]}

@@ -15,15 +15,15 @@
       "followTf": "body_frame",
       "followOrientation": false,
       "cameraState": {
-        "distance": 37.296697746089585,
+        "distance": 35.609864231472855,
         "perspective": true,
-        "phi": 1.3265438048582654,
+        "phi": 1.1933173389857343,
         "targetOffset": [
-          -0.6840891133443288,
-          -0.9415178910226986,
+          1.8695577262270913,
+          0.5922032901406528,
           0
         ],
-        "thetaOffset": 2.8397250567823877,
+        "thetaOffset": 1.648125331795088,
         "fovy": 0.7853981633974483,
         "near": 0.01,
         "far": 5000
