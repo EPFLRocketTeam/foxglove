@@ -54,7 +54,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
           case stateTopic:
             let tmp = element.message as {command:string,data: string[]};
             if(currentStateSimu != tmp.command){
-              console.log("Ici")
               setCurrentStateSimu(tmp.command);
               switch(Number(tmp.command)){
                 case 1:
@@ -111,10 +110,10 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
   });
 
   // Advertise data topic
-  context.advertise?.(dataTopic, "real_time_simulator/Data", {
+  context.advertise?.(dataTopic, "real_time_simulator/FoxgloveDataMessage", {
     datatypes: new Map(
       Object.entries({
-        "real_time_simulator/Data": {definitions: [
+        "real_time_simulator/FoxgloveDataMessage": {definitions: [
           { type: "string", name: "command"},
           { type: "string", isArray:true, name: "data"},
         ]}
@@ -159,7 +158,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
  * Publishes a message on the instruction topic to launch the nodes
  */
     function startNodes(){
-    console.log("Start nodes");
     context.publish?.(instructionTopic, { data: 'launch_nodes' });
     setWindSpeed(-1);
     setWindDirection(-1);
@@ -170,7 +168,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    * Launches the simulation
    */
    function launchSimulation(){
-    console.log("Launch simulation");
     context.publish?.(instructionTopic, { data: 'launch_simulation' });
     setCurrentState(stateEnum.simulation);
   }
@@ -179,7 +176,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    * Publishes a message on the instruction topic to stop nodes
    */
   function stopNodes(){
-    console.log("Stop nodes");
     context.publish?.(instructionTopic, { data: 'stop_nodes' });
     setCurrentState(stateEnum.stopped);
   }
@@ -188,7 +184,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    * Publishes a message on the instruction topic to stop nodes
    */
   function stopSimulation(){
-    console.log("Stop simulation");
     context.publish?.(instructionTopic, { data: 'stop_simulation' });
     setCurrentState(stateEnum.stopped);
   }
@@ -197,7 +192,6 @@ function SimulationPanel({ context }: { context: PanelExtensionContext }): JSX.E
    * Publishes a message on the instruction topic to stop nodes
    */
    function restartSimulation(){
-    console.log("Stop simulation");
     context.publish?.(instructionTopic, { data: 'restart_simulation' });
     setCurrentState(stateEnum.stopped);
   }
