@@ -1,0 +1,556 @@
+{
+  "configById": {
+    "Global Panel real_time_simulator.ERT - Parameter!ws61v2": {},
+    "3D Panel!jf4sd7": {
+      "autoSyncCameraState": false,
+      "autoTextBackgroundColor": true,
+      "cameraState": {
+        "distance": 44.60021964132463,
+        "perspective": true,
+        "phi": 1.3925620157418157,
+        "targetOffset": [
+          -9.347751809565628,
+          13.880138330222742,
+          0
+        ],
+        "thetaOffset": 5.575672185041682,
+        "fovy": 0.7853981633974483,
+        "near": 0.01,
+        "far": 5000
+      },
+      "checkedKeys": [
+        "name:Topics",
+        "t:/foxglove/grid",
+        "t:/dataviz"
+      ],
+      "clickToPublishPoseTopic": "/move_base_simple/goal",
+      "clickToPublishPointTopic": "/clicked_point",
+      "clickToPublishPoseEstimateTopic": "/initialpose",
+      "clickToPublishPoseEstimateXDeviation": 0.5,
+      "clickToPublishPoseEstimateYDeviation": 0.5,
+      "clickToPublishPoseEstimateThetaDeviation": 0.26179939,
+      "customBackgroundColor": "#000000",
+      "diffModeEnabled": true,
+      "expandedKeys": [
+        "name:Topics"
+      ],
+      "followMode": "follow",
+      "modifiedNamespaceTopics": [],
+      "pinTopics": false,
+      "settingsByKey": {},
+      "useThemeBackgroundColor": true
+    },
+    "Global Panel real_time_simulator.ERT - Simulation!1rw68rt": {},
+    "3D Panel!7aejgx": {
+      "autoSyncCameraState": false,
+      "autoTextBackgroundColor": true,
+      "cameraState": {
+        "targetOffset": [
+          0,
+          0,
+          0
+        ]
+      },
+      "checkedKeys": [
+        "name:Topics",
+        "t:/foxglove/grid",
+        "t:/rocket_visualization"
+      ],
+      "clickToPublishPoseTopic": "/move_base_simple/goal",
+      "clickToPublishPointTopic": "/clicked_point",
+      "clickToPublishPoseEstimateTopic": "/initialpose",
+      "clickToPublishPoseEstimateXDeviation": 0.5,
+      "clickToPublishPoseEstimateYDeviation": 0.5,
+      "clickToPublishPoseEstimateThetaDeviation": 0.26179939,
+      "customBackgroundColor": "#000000",
+      "diffModeEnabled": true,
+      "expandedKeys": [
+        "name:Topics"
+      ],
+      "followMode": "follow",
+      "modifiedNamespaceTopics": [],
+      "pinTopics": false,
+      "settingsByKey": {},
+      "useThemeBackgroundColor": true,
+      "followTf": "body_frame"
+    },
+    "Plot!iply3y": {
+      "paths": [
+        {
+          "value": "/control_measured.torque.z",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "followingViewWidth": 30
+    },
+    "Plot!hepe52": {
+      "paths": [
+        {
+          "value": "",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "Plot!15dt4iz": {
+      "paths": [
+        {
+          "value": "/rocket_state.pose.position.z",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "Plot!1246sp8": {
+      "paths": [
+        {
+          "value": "/control_measured.force.x",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/control_measured.force.y",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "Plot!2k2mzz5": {
+      "paths": [
+        {
+          "value": "/rocket_state.twist.linear.x",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/rocket_state.twist.linear.y",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "Plot!19jixci": {
+      "paths": [
+        {
+          "value": "/rocket_state.pose.position.x",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "value": "/rocket_state.pose.position.y",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "minYValue": "",
+      "maxYValue": "",
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240
+    },
+    "Tab!1xyw5ix": {
+      "activeTabIdx": 0,
+      "tabs": [
+        {
+          "title": "Parameters",
+          "layout": {
+            "first": "Global Panel real_time_simulator.ERT - Parameter!ws61v2",
+            "second": "3D Panel!jf4sd7",
+            "direction": "row",
+            "splitPercentage": 39.13627209666592
+          }
+        },
+        {
+          "title": "Simulation",
+          "layout": {
+            "first": "Global Panel real_time_simulator.ERT - Simulation!1rw68rt",
+            "second": {
+              "first": "3D Panel!7aejgx",
+              "second": {
+                "first": {
+                  "first": "Plot!iply3y",
+                  "second": {
+                    "first": "Plot!hepe52",
+                    "second": "Plot!15dt4iz",
+                    "direction": "column"
+                  },
+                  "direction": "column",
+                  "splitPercentage": 34.3249657385433
+                },
+                "second": {
+                  "first": "Plot!1246sp8",
+                  "second": {
+                    "first": "Plot!2k2mzz5",
+                    "second": "Plot!19jixci",
+                    "direction": "column"
+                  },
+                  "direction": "column",
+                  "splitPercentage": 34.21800314202627
+                },
+                "direction": "row"
+              },
+              "direction": "row"
+            },
+            "direction": "row",
+            "splitPercentage": 27.42550377343811
+          }
+        }
+      ]
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1,
+    "messageOrder": "receiveTime"
+  },
+  "layout": "Tab!1xyw5ix",
+  "default": {
+    "configById": {
+      "ImageViewPanel!1r5tdvh": {
+        "cameraTopic": "/CAM_FRONT_LEFT/image_rect_compressed",
+        "enabledMarkerTopics": [
+          "/CAM_FRONT_LEFT/image_markers_annotations",
+          "/CAM_FRONT_LEFT/image_markers_lidar"
+        ],
+        "customMarkerTopicOptions": [],
+        "transformMarkers": false,
+        "synchronize": false,
+        "mode": "fit"
+      },
+      "ImageViewPanel!15kmj7r": {
+        "cameraTopic": "/CAM_FRONT/image_rect_compressed",
+        "enabledMarkerTopics": [
+          "/CAM_FRONT/image_markers_annotations",
+          "/CAM_FRONT/image_markers_lidar"
+        ],
+        "customMarkerTopicOptions": [],
+        "transformMarkers": false,
+        "synchronize": false,
+        "mode": "fit"
+      },
+      "ImageViewPanel!1jn49st": {
+        "cameraTopic": "/CAM_FRONT_RIGHT/image_rect_compressed",
+        "enabledMarkerTopics": [
+          "/CAM_FRONT_RIGHT/image_markers_annotations",
+          "/CAM_FRONT_RIGHT/image_markers_lidar"
+        ],
+        "customMarkerTopicOptions": [],
+        "transformMarkers": false,
+        "synchronize": false,
+        "mode": "fit"
+      },
+      "3D Panel!3bempa7": {
+        "checkedKeys": [
+          "name:Topics",
+          "ns:/tf:base_link",
+          "ns:/tf:CAM_BACK",
+          "ns:/tf:CAM_FRONT",
+          "t:/LIDAR_TOP",
+          "t:/map",
+          "t:/markers/annotations",
+          "t:/pose",
+          "t:/tf"
+        ],
+        "expandedKeys": [
+          "name:Topics"
+        ],
+        "followMode": "follow",
+        "cameraState": {
+          "distance": 30,
+          "perspective": true,
+          "phi": 1.0099838922608053,
+          "targetOffset": [
+            3.552551884097018,
+            0.17283719439514628,
+            0
+          ],
+          "thetaOffset": 0.8495002225312027,
+          "fovy": 0.7853981633974483,
+          "near": 0.01,
+          "far": 5000
+        },
+        "modifiedNamespaceTopics": [
+          "/tf"
+        ],
+        "pinTopics": false,
+        "settingsByKey": {
+          "t:/pose": {
+            "size": {
+              "headLength": 0.75,
+              "headWidth": 2,
+              "shaftLength": 1.5,
+              "shaftWidth": 1.5
+            }
+          }
+        },
+        "autoSyncCameraState": false,
+        "autoTextBackgroundColor": true,
+        "diffModeEnabled": true,
+        "useThemeBackgroundColor": true,
+        "customBackgroundColor": "#000000"
+      },
+      "map!2vkib4e": {
+        "disabledTopics": [],
+        "zoomLevel": 17
+      },
+      "3D Panel!4ey2b8s": {
+        "checkedKeys": [
+          "name:Topics",
+          "t:/tf",
+          "t:/markers/annotations",
+          "t:/pose",
+          "ns:/tf:base_link",
+          "t:/map",
+          "t:/semantic_map",
+          "t:/drivable_area",
+          "t:/LIDAR_TOP",
+          "t:/RADAR_FRONT",
+          "t:/RADAR_FRONT_LEFT",
+          "t:/RADAR_FRONT_RIGHT",
+          "t:/RADAR_BACK_LEFT",
+          "t:/RADAR_BACK_RIGHT"
+        ],
+        "expandedKeys": [
+          "name:Topics",
+          "t:/tf"
+        ],
+        "followTf": "base_link",
+        "followOrientation": false,
+        "cameraState": {
+          "distance": 111.93497850814407,
+          "perspective": false,
+          "phi": 0.03891070297656745,
+          "targetOffset": [
+            1.9192625259993057,
+            -0.5920387880285412,
+            0
+          ],
+          "thetaOffset": -4.486440525404362,
+          "fovy": 0.7853981633974483,
+          "near": 0.01,
+          "far": 5000
+        },
+        "modifiedNamespaceTopics": [
+          "/tf"
+        ],
+        "pinTopics": false,
+        "settingsByKey": {},
+        "autoSyncCameraState": false,
+        "autoTextBackgroundColor": true,
+        "diffModeEnabled": true,
+        "useThemeBackgroundColor": true,
+        "customBackgroundColor": "#000000",
+        "followMode": "follow"
+      },
+      "Plot!2pb7zl7": {
+        "paths": [
+          {
+            "value": "/imu.linear_acceleration.x",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          },
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"throttle_sensor\"}.value",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          }
+        ],
+        "minYValue": "",
+        "maxYValue": "",
+        "showLegend": true,
+        "isSynced": true,
+        "xAxisVal": "timestamp"
+      },
+      "Plot!4792hqu": {
+        "paths": [
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"FL_wheel_speed\"}.value",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          },
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"FR_wheel_speed\"}.value",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          },
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"RL_wheel_speed\"}.value",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          },
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"RR_wheel_speed\"}.value",
+            "enabled": true,
+            "timestampMethod": "headerStamp"
+          }
+        ],
+        "minYValue": "",
+        "maxYValue": "",
+        "showLegend": true,
+        "isSynced": true,
+        "xAxisVal": "timestamp"
+      },
+      "StateTransitions!3i4dk1l": {
+        "paths": [
+          {
+            "value": "/diagnostics.status[:].values[:]{key==\"brake_switch\"}.value",
+            "timestampMethod": "headerStamp"
+          }
+        ]
+      },
+      "DiagnosticSummary!3equ26v": {
+        "minLevel": 0,
+        "pinnedIds": [],
+        "hardwareIdFilter": "",
+        "topicToRender": "/diagnostics",
+        "sortByLevel": true
+      },
+      "DiagnosticStatusPanel!4bdyip2": {
+        "topicToRender": "/diagnostics",
+        "collapsedSections": [],
+        "selectedHardwareId": "",
+        "splitFraction": 0.49345370528837923
+      },
+      "SourceInfo!7dc2bd": {},
+      "RawMessages!21ab95j": {
+        "topicPath": "/markers/annotations.markers[:]{id==28114}",
+        "diffTopicPath": "",
+        "diffMethod": "custom",
+        "diffEnabled": false,
+        "showFullMessageForDiff": false
+      },
+      "Tab!1xyw5ix": {
+        "activeTabIdx": 0,
+        "tabs": [
+          {
+            "title": "Perception",
+            "layout": {
+              "first": {
+                "first": "ImageViewPanel!1r5tdvh",
+                "second": {
+                  "first": "ImageViewPanel!15kmj7r",
+                  "second": "ImageViewPanel!1jn49st",
+                  "direction": "row",
+                  "splitPercentage": 50
+                },
+                "direction": "row",
+                "splitPercentage": 33.333
+              },
+              "second": "3D Panel!3bempa7",
+              "direction": "column",
+              "splitPercentage": 30
+            }
+          },
+          {
+            "title": "Planning",
+            "layout": {
+              "first": "map!2vkib4e",
+              "second": "3D Panel!4ey2b8s",
+              "direction": "row",
+              "splitPercentage": 30
+            }
+          },
+          {
+            "title": "Controls",
+            "layout": {
+              "first": "Plot!2pb7zl7",
+              "second": "Plot!4792hqu",
+              "direction": "column",
+              "splitPercentage": 50
+            }
+          },
+          {
+            "title": "Diagnostics",
+            "layout": {
+              "first": {
+                "first": {
+                  "first": "StateTransitions!3i4dk1l",
+                  "second": "DiagnosticSummary!3equ26v",
+                  "direction": "column",
+                  "splitPercentage": 45
+                },
+                "second": "DiagnosticStatusPanel!4bdyip2",
+                "direction": "column",
+                "splitPercentage": 40
+              },
+              "second": {
+                "first": "SourceInfo!7dc2bd",
+                "second": "RawMessages!21ab95j",
+                "direction": "column",
+                "splitPercentage": 60
+              },
+              "direction": "row",
+              "splitPercentage": 50
+            }
+          }
+        ]
+      }
+    },
+    "globalVariables": {},
+    "userNodes": {},
+    "linkedGlobalVariables": [],
+    "playbackConfig": {
+      "speed": 1,
+      "messageOrder": "receiveTime"
+    },
+    "layout": "Tab!1xyw5ix"
+  }
+}
