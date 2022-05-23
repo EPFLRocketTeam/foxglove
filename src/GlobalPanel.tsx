@@ -1,5 +1,5 @@
 import { PanelExtensionContext, RenderState, Topic} from "@foxglove/studio";
-import { useLayoutEffect, useEffect, useState } from "react";
+import { useLayoutEffect, useEffect, useState} from "react";
 import {ArrowLeft} from '@emotion-icons/bootstrap/ArrowLeft'
 import ReactDOM from "react-dom";
 
@@ -72,8 +72,8 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       datatypes: new Map(
         Object.entries({
           "real_time_simulator/Update": {definitions: [
-            { type: "string", name: "config"},
             { type: "string", name: "parameter"},
+            { type: "string", isArray:true, name: "sub_param"},
             { type: "string", name: "value"},
           ]}
         }),
@@ -221,7 +221,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   }
 
   function FileParameters({name}: {name:string}){
-    let params: [string,string][] = []
+    let params: [string,any][] = []
     if(typeof parameters !== "undefined"){
       Array.from(parameters.entries()).forEach(elem => {
         let k = elem[0].split('/');
@@ -232,19 +232,36 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
     }
     return (
       <div style={{margin:'8px'}}><br/>
-      {params.map(elem => <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={elem[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={elem[1]} onBlur={onChange}></input></div>)}
+        {params.map(elem => 
+        <HandleParam param={elem} prefix={[]}/>)}
       </div>
     );
   }
 
-  function onChange(event:any){
-    let v = String(event.target.value)
-    if(v.includes(',')){
-      v = '[' + v + ']'
+  function HandleParam({param, prefix} : {param:[string, any], prefix:string[]}){
+    if(typeof param[1] === 'object'){
+      return (<div style={{paddingLeft:'8px', marginBottom:'16px'}}>
+        <h2 style={{marginBottom:'0px', paddingBottom:'0px', textTransform:'capitalize', marginLeft:'-8px'}}>{param[0]}</h2>
+        {Object.entries(param[1]).map(e => <HandleParam param={e} prefix={[...prefix, param[0]]}/>)}
+        </div>);
+    }else{
+      return <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={param[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={param[1]} onBlur={e => onParameterChange([...prefix, param[0]], e)}></input></div>
     }
+  }
+
+  /**
+   * Send the modification request to the server for the parameter
+   * @param prefix List of the prefixes of the parameter
+   * @param event event that happened
+   */
+  function onParameterChange(prefix:string[], event:any){
+    
+    let v = String(event.target.value)
+    let p = '/' + expanded + '/' + prefix[0]
+    
     context.publish?.(updateTopic, {
-      config: expanded,
-      parameter: String(event.target.previousElementSibling.value),
+      parameter: p,
+      sub_param: prefix.slice(1),
       value: v
     });
   }
@@ -279,7 +296,6 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       fontSize:'14px',
       marginBottom:'10px'
     };
-    buttonStyle
     return (
         <button style={buttonStyle} onClick={() => selectConfig(name)}>{name}</button>
     );
