@@ -205,6 +205,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       </div>
     );
   }
+  
 
   function FileBar({name, expand} : {name:string, expand:Boolean}){
     var params = <></>
@@ -222,11 +223,13 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
 
   function FileParameters({name}: {name:string}){
     let params: [string,any][] = []
+    let temp: string[] = []
     if(typeof parameters !== "undefined"){
       Array.from(parameters.entries()).forEach(elem => {
         let k = elem[0].split('/');
         if(k[1] == name){
           params = [...params, [k[2] as string, elem[1]]];
+          temp = [...temp, k[2] as string + " " +  elem[1] as string + " type: " + typeof elem[1]]
         }
       })
     }
@@ -240,12 +243,18 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
 
   function HandleParam({param, prefix} : {param:[string, any], prefix:string[]}){
     if(typeof param[1] === 'object'){
-      return (<div style={{paddingLeft:'8px', marginBottom:'16px'}}>
+      return (<div style={{paddingLeft:'16px', marginBottom:'16px'}}>
         <h2 style={{marginBottom:'0px', paddingBottom:'0px', textTransform:'capitalize', marginLeft:'-8px'}}>{param[0]}</h2>
         {Object.entries(param[1]).map(e => <HandleParam param={e} prefix={[...prefix, param[0]]}/>)}
         </div>);
     }else{
-      return <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={param[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={param[1]} onBlur={e => onParameterChange([...prefix, param[0]], e)}></input></div>
+      return <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={param[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={param[1]} onKeyDown={e => handleKeyDown([...prefix, param[0]], e)} onBlur={e => onParameterChange([...prefix, param[0]], e)}></input></div>
+    }
+  }
+
+  const handleKeyDown = (prefix:string[], event:any) => {
+    if(event.key === 'Enter'){
+      onParameterChange(prefix, event)
     }
   }
 
