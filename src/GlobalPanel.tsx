@@ -168,84 +168,23 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
 
   topics;
   
-
+  /**
+   * Goes back to the list of parameters and clear the loaded parameters
+   */
   function backToListConfig(){
     context.publish?.(instructionTopic, {data: 'clear_parameters'});
     setCurrentPage(pageEnum.choose_configs);    
   }
 
-  function ParameterPage(){
-    return <ParameterFilesList list={parameterFiles} />
-  };
-
-  function ParameterFilesList({ list }: {list:string[]}){
-    let buttonStyle = {
-      backgroundColor:'#4d4d4d', 
-      borderRadius:'3px', 
-      display:'inline-block', 
-      color:'#ffffff', 
-      fontSize:'14px', 
-      padding:'12px 30px', 
-      marginBottom:'16px',
-      border:'none'
-    };
-
-    return (
-      <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
-        <div>
-          <ArrowLeft size="48" onClick={backToListConfig} style={{marginLeft:'8px', marginTop:'8px'}}/>
-          <h1 style={{textAlign:'center'}}>{configName}</h1>
-        </div>
-        <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
-         {list.map(item => 
-            <FileBar name={item} expand={expanded == item}/>
-          )}
-         </div>
-        <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={stopConfig}>Close config</button></div>
-      </div>
-    );
-  }
-
-  function FileBar({name, expand} : {name:string, expand:Boolean}){
-    var params = <></>
-    if(expand){
-      params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid', borderRadius:'4px'}}><FileParameters name={name}/></div>
-    }
-    return (
-      <div>
-        <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px', borderRadius:'4px', textTransform:'capitalize'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
-          {params}
-      </div>
-      
-    );
-  }
-
-  function FileParameters({name}: {name:string}){
-    let params: [string,any][] = []
-    if(typeof parameters !== "undefined"){
-      Array.from(parameters.entries()).forEach(elem => {
-        let k = elem[0].split('/');
-        if(k[1] == name){
-          params = [...params, [k[2] as string, elem[1]]];
-        }
-      })
-    }
-    return (
-      <div style={{margin:'8px'}}><br/>
-        {params.map(elem => 
-        <HandleParam param={elem} prefix={[]}/>)}
-      </div>
-    );
-  }
-
-  function HandleParam({param, prefix} : {param:[string, any], prefix:string[]}){
-    if(typeof param[1] === 'object'){
-      return (<div style={{paddingLeft:'8px', marginBottom:'16px'}}>
-        <h2 style={{marginBottom:'0px', paddingBottom:'0px', textTransform:'capitalize', marginLeft:'-8px'}}>{param[0]}</h2>
-        {Object.entries(param[1]).map(e => <HandleParam param={e} prefix={[...prefix, param[0]]}/>)}
-        </div>);
-    }else{
-      return <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={param[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={param[1]} onBlur={e => onParameterChange([...prefix, param[0]], e)}></input></div>
+  /**
+   * Handles the button pressed event
+   * Saves the parameter if enter has been pressed
+   * @param prefix List of prefixes used to modify the parameter
+   * @param event button pressed event
+   */
+  const handleKeyDown = (prefix:string[], event:any) => {
+    if(event.key === 'Enter'){
+      onParameterChange(prefix, event)
     }
   }
 
@@ -409,7 +348,7 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
       case pageEnum.choose_configs:
         return <ListConfigs/>;
       case pageEnum.edit_param:
-        return <ParameterPage/>;
+        return <ParameterPage backToListConfig={backToListConfig} configName={configName} expanded={expanded} saveParameters={saveParameters} stopConfig={stopConfig} parameterList={parameters as ReadonlyMap<String, any>} parameters={parameterFiles} onParameterChange={onParameterChange} setExpanded={setExpanded} handleKeyDown={handleKeyDown}/>;
       case pageEnum.launched:
         return <LaunchedPanel/>
       default:
@@ -426,7 +365,98 @@ function ParameterPanel({ context }: { context: PanelExtensionContext }): JSX.El
   return layout;
 }
 
+/**
+ * Generates the parameter page
+ * @param param0 
+ * @returns Returns the layout of the parameter page
+ */
+function ParameterPage({backToListConfig,configName,expanded,saveParameters,stopConfig,parameters, parameterList, onParameterChange, setExpanded, handleKeyDown}: {backToListConfig: () => void,configName:string,expanded:string,saveParameters:() => void,stopConfig:() => void,parameters:string[], parameterList:ReadonlyMap<String, any>, onParameterChange:(prefix: string[], event: any) => void, setExpanded:React.Dispatch<React.SetStateAction<string>>, handleKeyDown:(prefix: string[], event: any) => void}){
+  let buttonStyle = {
+    backgroundColor:'#4d4d4d', 
+    borderRadius:'3px', 
+    display:'inline-block', 
+    color:'#ffffff', 
+    fontSize:'14px', 
+    padding:'12px 30px', 
+    marginBottom:'16px',
+    border:'none'
+  };
 
+  return (
+    <div style={{display:'flex', justifyContent:'center', height:'100%', flexDirection:'column'}}>
+      <div>
+        <ArrowLeft size="48" onClick={backToListConfig} style={{marginLeft:'8px', marginTop:'8px'}}/>
+        <h1 style={{textAlign:'center'}}>{configName}</h1>
+      </div>
+      <div style={{flexGrow:'1', overflowY:'auto', margin:'8px'}}>
+       {parameters.map(item => 
+          <FileBar parameterList={parameterList} name={item} expand={expanded == item} onParameterChange={onParameterChange} setExpanded={setExpanded} handleKeyDown={handleKeyDown}/>
+        )}
+       </div>
+      <div style={{display:'flex', justifyContent:'space-evenly'}}><button style={buttonStyle} onClick={saveParameters}>Save</button><button style={buttonStyle} onClick={stopConfig}>Close config</button></div>
+    </div>
+  );
+};
+
+/**
+ * Generate one parameter page file
+ * @param param0 
+ * @returns Returns the layout of one parameter file
+ */
+function FileBar({parameterList, name, expand, onParameterChange, setExpanded, handleKeyDown} : {parameterList:ReadonlyMap<String, any>, name:string, expand:Boolean, onParameterChange:(prefix: string[], event: any) => void, setExpanded:React.Dispatch<React.SetStateAction<string>>, handleKeyDown:(prefix: string[], event: any) => void}){
+  var params = <></>
+  if(expand){
+    params = <div style={{margin:'8px', backgroundColor:'#4d4d4d', borderColor:'white', borderWidth:'1px', borderStyle:'solid', borderRadius:'4px'}}><FileParameters parameterList={parameterList} name={name} onParameterChange={onParameterChange} handleKeyDown={handleKeyDown}/></div>
+  }
+  return (
+    <div>
+      <p style={{textAlign:'center', borderStyle:'solid', borderWidth:'1px', borderColor:'white', backgroundColor:'#4d4d4d',color:'#ffffff', fontSize:'16px', padding:'16px 40px', borderRadius:'4px', textTransform:'capitalize'}} onClick={() => setExpanded(expand ? "" : name)}>{name}</p>
+        {params}
+    </div>
+    
+  );
+}
+
+/**
+ * Generate the list of parameters for one parameter file
+ * @param param0 
+ * @returns Returns the layout of the list of parameters for one parameter file
+ */
+function FileParameters({parameterList, name, onParameterChange, handleKeyDown}: {parameterList:ReadonlyMap<String, any>, name:string, onParameterChange:(prefix: string[], event: any) => void, handleKeyDown:(prefix: string[], event: any) => void}){
+  let params: [string,any][] = []
+  let temp: string[] = []
+  if(typeof parameterList !== "undefined"){
+    Array.from(parameterList.entries()).forEach(elem => {
+      let k = elem[0].split('/');
+      if(k[1] == name){
+        params = [...params, [k[2] as string, elem[1]]];
+        temp = [...temp, k[2] as string + " " +  elem[1] as string + " type: " + typeof elem[1]]
+      }
+    })
+  }
+  return (
+    <div style={{margin:'8px'}}><br/>
+      {params.map(elem => 
+      <HandleParam param={elem} prefix={[]} onParameterChange={onParameterChange} handleKeyDown={handleKeyDown}/>)}
+    </div>
+  );
+}
+
+/**
+ * Generate the display for one parameter by recursively adding depth
+ * @param param0 
+ * @returns Returns one parameter layout
+ */
+function HandleParam({param, prefix, onParameterChange, handleKeyDown} : {param:[string, any], prefix:string[], onParameterChange:(prefix: string[], event: any) => void, handleKeyDown:(prefix: string[], event: any) => void}){
+  if(typeof param[1] === 'object'){
+    return (<div style={{paddingLeft:'16px', marginBottom:'16px'}}>
+      <h2 style={{marginBottom:'0px', paddingBottom:'0px', textTransform:'capitalize', marginLeft:'-8px'}}>{param[0]}</h2>
+      {Object.entries(param[1]).map(e => <HandleParam param={e} prefix={[...prefix, param[0]]} onParameterChange={onParameterChange} handleKeyDown={handleKeyDown}/>)}
+      </div>);
+  }else{
+    return <div style={{marginBottom:'4px', display:'flex', justifyContent:'center'}}><input type='text' disabled style={{flex:1, minWidth:'50px', maxWidth:'220px', backgroundColor:'#bababa', color:'black'}} value={param[0]}></input><input type='text' style={{flex:1, minWidth:'50px', maxWidth:'220px'}} defaultValue={param[1]} onKeyDown={e => handleKeyDown([...prefix, param[0]], e)} onBlur={e => onParameterChange([...prefix, param[0]], e)}></input></div>
+  }
+}
 
 export function initParameterPanel(context: PanelExtensionContext) {
   ReactDOM.render(<ParameterPanel context={context} />, context.panelElement);
