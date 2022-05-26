@@ -42,7 +42,7 @@ mkdir log
 ```
 
 8. Launch foxglove (No need to connect to ROS)
-9. In the Layouts tab (second from the top on the left), Click on the file "Import layout" and import the two layouts that are in /home/foxglove/foxglove/layouts
+9. In the Layouts tab (second from the top on the left), Click on the file "Import layout" and import the Simulator.json layout that is in the  /home/foxglove/foxglove/layouts folder
 10. In foxglove, at the bottom left, there is a Preference tab with a screw icon. Click on it and change the ROS_PACKAGE_PATH value with your path to the ROS src : ex. /home/user/catkin_ws/src
 
 11. Close Foxglove studio
